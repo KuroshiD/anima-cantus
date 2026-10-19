@@ -1,0 +1,27 @@
+{
+  "name": "anima-cantus",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --filter @anima/shared build && pnpm --filter @anima/api exec prisma generate && pnpm --filter @anima/api build && pnpm --filter @anima/web build",
+    "test": "pnpm --filter @anima/shared test && pnpm --filter @anima/shared build && pnpm --filter @anima/api test && pnpm --filter @anima/web test",
+    "lint": "eslint .",
+    "dev:api": "pnpm --filter @anima/api dev",
+    "dev:web": "pnpm --filter @anima/web dev",
+    "dev:worker": "pnpm --filter @anima/api worker"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@prisma/client", "@prisma/engines", "argon2", "esbuild", "msgpackr-extract", "prisma"]
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.1"
+  }
+}
