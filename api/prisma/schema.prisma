@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  COUPLE
+  ADMIN
+
+  @@map("role")
+}
+
+enum JourneyStepKey {
+  CADASTRO
+  CONTRATO
+  REPERTORIO
+  CASAMENTO
+  POS_EVENTO
+
+  @@map("journey_step_key")
+}
+
+enum StageStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  AGUARDANDO_VALIDACAO
+  CONCLUIDA
+
+  @@map("stage_status")
+}
+
+enum ServiceKind {
+  PACOTE
+  SERVICO
+  ADICIONAL
+
+  @@map("service_kind")
+}
+
+enum FileKind {
+  GERADO
+  ASSINADO
+
+  @@map("file_kind")
+}
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+
+  @@map("notification_channel")
+}
+
+enum NotificationDelivery {
+  ENVIADO
+  FALHOU
+
+  @@map("notification_delivery")
+}
+
+enum TokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+
+  @@map("token_purpose")
+}
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String     @unique
+  passwordHash    String     @map("password_hash")
+  role            Role
+  emailVerifiedAt DateTime?  @map("email_verified_at")
+  termsAcceptedAt DateTime? @map("terms_accepted_at")
+  termsVersion    String?    @map("terms_version")
+  coupleId        String?    @unique @map("couple_id") @db.Uuid
+  couple          Couple?    @relation(fields: [coupleId], references: [id])
+  tokens          EmailToken[]
+  validations     ContractValidation[]
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  @@map("app_user")
+}
+
+model EmailToken {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose   TokenPurpose
+  tokenHash String       @map("token_hash")
+  expiresAt DateTime     @map("expires_at")
+  usedAt    DateTime?    @map("used_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([tokenHash])
+  @@map("email_token")
+}
+
+model Couple {
+  id           String   @id @default(uuid()) @db.Uuid
+  partnerOne   String   @map("partner_one")
+  partnerTwo   String   @map("partner_two")
+  phone        String?
+  email        String?
+  legalName    String?  @map("legal_name")
+  documentId   String?  @map("document_id")
+  address      String?
+  weddingDate  DateTime @map("wedding_date") @db.Date
+  weddingTime  String?  @map("wedding_time")
+  venue        String?
+  formation    String?
+  paymentTerms String?  @map("payment_terms")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User?
+  journey      Journey?
+  contract     Contract?
+  selections   RepertoireSelection[]
+
+  @@index([weddingDate])
+  @@map("couple")
+}
+
+model Journey {
+  id                    String    @id @default(uuid()) @db.Uuid
+  coupleId              String    @unique @map("couple_id") @db.Uuid
+  couple                Couple    @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  repertoireWindowStart DateTime? @map("repertoire_window_start") @db.Date
+  repertoireWindowEnd   DateTime? @map("repertoire_window_end") @db.Date
+  anniversarySendOn     DateTime? @map("anniversary_send_on") @db.Date
+  steps                 JourneyStep[]
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("journey")
+}
+
+model JourneyStep {
+  id        String         @id @default(uuid()) @db.Uuid
+  journeyId String         @map("journey_id") @db.Uuid
+  journey   Journey        @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  step      JourneyStepKey
+  status    StageStatus
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@unique([journeyId, step])
+  @@map("journey_step")
+}
+
+model ServiceItem {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  kind        ServiceKind
+  priceCents  Int         @map("price_cents")
+  active      Boolean     @default(true)
+  sortOrder   Int         @default(0) @map("sort_order")
+  items       ContractItem[]
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("service_item")
+}
+
+model Contract {
+  id            String      @id @default(uuid()) @db.Uuid
+  coupleId      String      @unique @map("couple_id") @db.Uuid
+  couple        Couple      @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  status        StageStatus @default(EM_ANDAMENTO)
+  discountCents Int         @default(0) @map("discount_cents")
+  uploadError   String?     @map("upload_error")
+  items         ContractItem[]
+  snapshots     ContractSnapshot[]
+  files         ContractFile[]
+  validations   ContractValidation[]
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("contract")
+}
+
+model ContractItem {
+  id         String      @id @default(uuid()) @db.Uuid
+  contractId String      @map("contract_id") @db.Uuid
+  contract   Contract    @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  serviceId  String      @map("service_id") @db.Uuid
+  service    ServiceItem @relation(fields: [serviceId], references: [id])
+
+  @@unique([contractId, serviceId])
+  @@map("contract_item")
+}
+
+model ContractSnapshot {
+  id            String   @id @default(uuid()) @db.Uuid
+  contractId    String   @map("contract_id") @db.Uuid
+  contract      Contract @relation(fields: [contractId], references: [id])
+  totalCents    Int      @map("total_cents")
+  discountCents Int      @map("discount_cents")
+  totalInWords  String   @map("total_in_words")
+  paymentTerms  String   @map("payment_terms")
+  itemsJson     Json     @map("items_json")
+  legalName     String   @map("legal_name")
+  documentId    String   @map("document_id")
+  weddingDate   DateTime @map("wedding_date") @db.Date
+  weddingTime   String?  @map("wedding_time")
+  venue         String
+  formation     String?
+  address       String
+  email         String
+  phone         String
+  createdAt     DateTime @default(now()) @map("created_at")
+  files         ContractFile[]
+
+  @@index([contractId, createdAt])
+  @@map("contract_snapshot")
+}
+
+model ContractFile {
+  id         String           @id @default(uuid()) @db.Uuid
+  contractId String           @map("contract_id") @db.Uuid
+  contract   Contract         @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  snapshotId String           @map("snapshot_id") @db.Uuid
+  snapshot   ContractSnapshot @relation(fields: [snapshotId], references: [id])
+  kind       FileKind
+  objectKey  String           @map("object_key")
+  sha256     String
+  sizeBytes  Int              @map("size_bytes")
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  @@index([contractId, kind])
+  @@map("contract_file")
+}
+
+model ContractValidation {
+  id          String   @id @default(uuid()) @db.Uuid
+  contractId  String   @map("contract_id") @db.Uuid
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  accepted    Boolean
+  reason      String?
+  adminUserId String   @map("admin_user_id") @db.Uuid
+  admin       User     @relation(fields: [adminUserId], references: [id])
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([contractId, createdAt])
+  @@map("contract_validation")
+}
+
+model CeremonyMoment {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  sortOrder  Int      @map("sort_order")
+  selections RepertoireSelection[]
+  tips       MusicTip[]
+
+  @@map("ceremony_moment")
+}
+
+model RepertoireSelection {
+  id        String         @id @default(uuid()) @db.Uuid
+  coupleId  String         @map("couple_id") @db.Uuid
+  couple    Couple         @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  momentId  String         @map("moment_id") @db.Uuid
+  moment    CeremonyMoment @relation(fields: [momentId], references: [id])
+  songTitle String         @map("song_title")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@unique([coupleId, momentId])
+  @@map("repertoire_selection")
+}
+
+model MusicTip {
+  id       String          @id @default(uuid()) @db.Uuid
+  momentId String?         @map("moment_id") @db.Uuid
+  moment   CeremonyMoment? @relation(fields: [momentId], references: [id])
+  title    String
+  artist   String?
+  note     String?
+  active   Boolean         @default(true)
+
+  @@map("music_tip")
+}
+
+model BudgetRequest {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  phone       String
+  email       String?
+  weddingDate DateTime? @map("wedding_date") @db.Date
+  venue       String?
+  hasPlanner  Boolean?  @map("has_planner")
+  source      String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("budget_request")
+}
+
+model NotificationLog {
+  id         String                 @id @default(uuid()) @db.Uuid
+  type       String
+  entityType String                 @map("entity_type")
+  entityId   String                 @map("entity_id")
+  channel    NotificationChannel
+  reference  String
+  status     NotificationDelivery
+  detail     String?
+  createdAt  DateTime               @default(now()) @map("created_at")
+
+  @@index([type, entityType, entityId, channel, reference])
+  @@map("notification_log")
+}
+
+model GalleryItem {
+  id        String  @id @default(uuid()) @db.Uuid
+  title     String
+  mediaUrl  String  @map("media_url")
+  kind      String
+  altText   String  @map("alt_text")
+  sortOrder Int     @default(0) @map("sort_order")
+  active    Boolean @default(true)
+
+  @@map("gallery_item")
+}
+
+model SiteContent {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("site_content")
+}
+
+model AlertConfig {
+  id               String   @id @default("default")
+  reminderLeadDays Int      @default(7) @map("reminder_lead_days")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("alert_config")
+}
+
+model SystemHeartbeat {
+  id    String   @id
+  ranAt DateTime @map("ran_at")
+
+  @@map("system_heartbeat")
+}
