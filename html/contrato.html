@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contrato — Anima Cantus</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./shared.js"></script>
+  <script>
+    // Conta nova (sem contrato gerado): leva direto para a etapa pendente do assistente.
+    if (AC.store.get('contrato:status') === 'sem-contrato') location.replace(AC.nextContractStep());
+  </script>
+
+  <style>
+    /* ===== Particular: Contrato ===== */
+
+    /* Card principal */
+    .sign__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .sign__top > .icon { font-size: 1.75rem; color: var(--green); }
+
+    .sign__title { margin-top: 1rem; }
+    .sign__desc { margin-top: 0.5rem; color: var(--muted); font-size: 0.875rem; max-width: 52ch; }
+
+    .sign__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+
+    .sign__steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 2rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .sign__step { display: flex; align-items: center; gap: 0.625rem; font-size: 0.75rem; }
+    .sign__step .marker { width: 1.75rem; height: 1.75rem; }
+
+    /* Área de envio */
+    .dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 1.5rem;
+      padding: 2rem 1rem;
+      border: 1px dashed #d6cbb8;
+      border-radius: var(--radius);
+      background: var(--sand-soft);
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .dropzone[hidden] { display: none; }
+
+    .dropzone:hover,
+    .dropzone.is-over { background: var(--sand); border-color: var(--green); }
+    .dropzone:has(input:focus-visible) { outline: 2px solid var(--green); outline-offset: 2px; }
+
+    .dropzone .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .dropzone__title { font-size: 0.875rem; font-weight: 500; }
+    .dropzone__hint { color: var(--muted); font-size: 0.75rem; }
+    .dropzone__error { color: #b3261e; font-size: 0.75rem; min-height: 1.2em; margin-top: 0.5rem; }
+
+    .upload-ready {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--sand-soft);
+    }
+
+    .upload-ready.is-visible { display: flex; }
+    .upload-ready__name { font-size: 0.875rem; font-weight: 500; word-break: break-all; }
+    .upload-ready__actions { display: flex; gap: 0.5rem; }
+
+    @media (max-width: 600px) {
+      .sign__steps { flex-direction: column; gap: 1rem; }
+      .sign__step { font-size: 0.9rem; }
+      .sign__step .marker { width: 2.25rem; height: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ícones usados nesta página -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-file-check" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="m9 15 2 2 4-4"/></symbol>
+    <symbol id="i-list-music" viewBox="0 0 24 24"><path d="M21 15V6"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M12 12H3"/><path d="M16 6H3"/><path d="M12 18H3"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  </svg>
+
+  <div class="shell">
+
+    <aside class="sidebar">
+      <a class="brand" href="minha-jornada.html" aria-label="Anima Cantus — início">
+        <span>Anima</span> <span>Cantus</span>
+      </a>
+      <div class="sidebar__actions">
+        <button class="icon-btn" type="button" aria-label="Notificações"><svg class="icon"><use href="#i-bell"/></svg></button>
+        <button class="icon-btn" type="button" aria-label="Sair da conta" data-logout><svg class="icon"><use href="#i-logout"/></svg></button>
+      </div>
+      <nav class="nav" aria-label="Principal">
+        <a href="minha-jornada.html"><svg class="icon"><use href="#i-home"/></svg>Minha jornada</a>
+        <a href="contrato.html" aria-current="page"><svg class="icon"><use href="#i-file"/></svg>Contrato</a>
+        <a href="repertorio.html"><svg class="icon"><use href="#i-list-music"/></svg>Repertório</a>
+      </nav>
+      <div class="sidebar__foot">
+        <p class="sidebar__user"><span>Conectados como</span><strong data-couple>Marina &amp; Rafael</strong></p>
+        <button class="btn btn--secondary btn--sm sidebar__logout" type="button" data-logout><svg class="icon"><use href="#i-logout"/></svg>Sair da conta</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="container">
+
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Etapa 2 de 5</p>
+            <h1 class="page-title">Contrato</h1>
+          </div>
+          <button class="icon-btn" type="button" aria-label="Notificações">
+            <svg class="icon"><use href="#i-bell"/></svg>
+          </button>
+        </header>
+
+        <nav class="tabs" aria-label="Etapas do contrato">
+          <a href="contrato-dados.html"><svg class="icon"><use href="#i-check"/></svg>Dados</a>
+          <a href="contrato-servicos.html"><svg class="icon"><use href="#i-check"/></svg>Serviços</a>
+          <a href="contrato-conferencia.html"><svg class="icon"><use href="#i-check"/></svg>Conferência</a>
+          <a href="contrato.html" aria-current="step">Assinatura</a>
+        </nav>
+
+        <div class="split" id="assinatura">
+
+          <section class="card" aria-labelledby="sign-title">
+            <div class="sign__top">
+              <span class="pill pill--progress" id="sign-status">Aguardando assinatura</span>
+              <svg class="icon" aria-hidden="true"><use href="#i-file-check"/></svg>
+            </div>
+
+            <h2 class="heading-serif heading-serif--lg sign__title" id="sign-title">Seu contrato está pronto</h2>
+            <p class="sign__desc">Faça o download, assine digitalmente pelo GOV.BR e envie o arquivo assinado.</p>
+
+            <div class="sign__actions">
+              <!-- TODO: apontar para o PDF real do contrato -->
+              <a class="btn btn--primary" href="assets/contrato.pdf" download><svg class="icon"><use href="#i-download"/></svg>Baixar contrato</a>
+              <a class="btn btn--secondary" href="assets/contrato.pdf" target="_blank" rel="noopener">Visualizar PDF</a>
+            </div>
+
+            <ol class="sign__steps" aria-label="Passos da assinatura">
+              <li class="sign__step"><span class="marker marker--soft"><svg class="icon"><use href="#i-check"/></svg></span>Baixar PDF</li>
+              <li class="sign__step"><span class="marker marker--soft"><svg class="icon"><use href="#i-check"/></svg></span>Assinar no GOV.BR</li>
+              <li class="sign__step"><span class="marker" id="step-send">3</span>Enviar assinado</li>
+            </ol>
+
+            <label class="dropzone" id="dropzone">
+              <input class="sr-only" type="file" id="file" accept="application/pdf,.pdf">
+              <svg class="icon" aria-hidden="true"><use href="#i-upload"/></svg>
+              <span class="dropzone__title">Enviar contrato assinado</span>
+              <span class="dropzone__hint">PDF de até 10 MB</span>
+              <span class="dropzone__error" id="error" role="alert"></span>
+            </label>
+
+            <div class="upload-ready" id="ready">
+              <p class="upload-ready__name" id="file-name"></p>
+              <div class="upload-ready__actions">
+                <button class="btn btn--secondary btn--sm" type="button" id="clear">Trocar arquivo</button>
+                <button class="btn btn--primary btn--sm" type="button" id="send">Enviar contrato</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="card" aria-labelledby="summary-title">
+            <h2 class="summary__title" id="summary-title">Resumo da contratação</h2>
+
+            <dl id="rows">
+              <div class="summary__row"><dt>Pacote completo</dt><dd>R$ 3.500,00</dd></div>
+              <div class="summary__row"><dt>Instrumentista adicional</dt><dd>R$ 400,00</dd></div>
+              <div class="summary__row"><dt>Recepção</dt><dd>R$ 800,00</dd></div>
+            </dl>
+
+            <div class="summary__total">
+              <span class="summary__total-label">Total</span>
+              <span class="summary__total-value" id="total">R$ 4.700</span>
+            </div>
+            <p class="summary__words" id="words">Quatro mil e setecentos reais</p>
+
+            <p class="summary__note">
+              <svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>
+              Os valores deste contrato ficam preservados, mesmo após futuras alterações de preço.
+            </p>
+          </aside>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Se o casal passou pelo assistente, o resumo mostra os serviços escolhidos.
+    (function () {
+      var ids = AC.store.get('contrato:servicos');
+      if (!ids) return;
+      var sel = AC.SERVICES.filter(function (x) { return ids.indexOf(x.id) > -1; });
+      var total = sel.reduce(function (n, x) { return n + x.preco; }, 0);
+      document.getElementById('rows').innerHTML = sel.map(function (x) {
+        return '<div class="summary__row"><dt>' + x.nome + '</dt><dd>' + AC.brl(x.preco) + '</dd></div>';
+      }).join('');
+      document.getElementById('total').textContent = AC.brlTotal(total);
+      document.getElementById('words').textContent = AC.extenso(total);
+    })();
+  </script>
+  <script>
+    // Garante que a aba ativa fique visível se as abas rolarem no mobile
+    (function () {
+      var tabs = document.querySelector('.tabs');
+      if (tabs) tabs.scrollLeft = tabs.scrollWidth;
+    })();
+  </script>
+  <script>
+    (function () {
+      var MAX_BYTES = 10 * 1024 * 1024;
+      var $ = function (id) { return document.getElementById(id); };
+      var input = $('file'), zone = $('dropzone'), error = $('error'),
+          ready = $('ready'), fileName = $('file-name');
+      var chosen = null;
+
+      function setError(msg) { error.textContent = msg || ''; }
+
+      function pick(file) {
+        setError('');
+        if (!file) return;
+        var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        if (!isPdf) return setError('Envie um arquivo em PDF.');
+        if (file.size > MAX_BYTES) return setError('O arquivo tem mais de 10 MB. Envie um PDF menor.');
+        chosen = file;
+        fileName.textContent = file.name + ' (' + (file.size / 1048576).toFixed(1).replace('.', ',') + ' MB)';
+        zone.hidden = true;
+        ready.classList.add('is-visible');
+      }
+
+      function reset() {
+        chosen = null;
+        input.value = '';
+        zone.hidden = false;
+        ready.classList.remove('is-visible');
+        setError('');
+      }
+
+      input.addEventListener('change', function () { pick(input.files[0]); });
+
+      ['dragenter', 'dragover'].forEach(function (t) {
+        zone.addEventListener(t, function (e) { e.preventDefault(); zone.classList.add('is-over'); });
+      });
+      ['dragleave', 'drop'].forEach(function (t) {
+        zone.addEventListener(t, function (e) { e.preventDefault(); zone.classList.remove('is-over'); });
+      });
+      zone.addEventListener('drop', function (e) { pick(e.dataTransfer.files[0]); });
+
+      $('clear').addEventListener('click', reset);
+
+      $('send').addEventListener('click', function () {
+        if (!chosen) return;
+        // TODO: enviar `chosen` ao back-end (FormData / fetch).
+        var status = $('sign-status');
+        status.textContent = 'Em conferência';
+        status.className = 'pill pill--done';
+        var step = $('step-send');
+        step.className = 'marker marker--soft';
+        step.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>';
+        ready.innerHTML = '<p class="upload-ready__name">Contrato enviado. Vamos conferir sua assinatura e avisar quando o repertório for liberado.</p>';
+      });
+    })();
+  </script>
+</body>
+</html>

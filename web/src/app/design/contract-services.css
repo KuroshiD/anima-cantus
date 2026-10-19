@@ -1,0 +1,31 @@
+/* ===== Particular: Contrato Â· ServiÃ§os ===== */
+    .options { display: grid; gap: 0.75rem; margin: 0; padding: 0; border: 0; }
+
+    .option {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .option:hover { border-color: #cfc6b5; }
+    .option:has(input:checked) { border-color: var(--green); background: var(--sand-soft); }
+    .option:has(input:focus-visible) { outline: 2px solid var(--green); outline-offset: 2px; }
+    .option:has(input:disabled) { cursor: default; }
+
+    .option input { width: 1.15rem; height: 1.15rem; accent-color: var(--green); }
+    .option__name { font-size: 0.9375rem; font-weight: 500; }
+    .option__desc { color: var(--muted); font-size: 0.8125rem; }
+    .option__side { display: grid; justify-items: end; gap: 0.35rem; }
+    .option__price { font-variant-numeric: tabular-nums; font-weight: 500; font-size: 0.875rem; white-space: nowrap; }
+
+    @media (max-width: 600px) {
+      .option { grid-template-columns: auto 1fr; }
+      .option__side { grid-column: 2; justify-items: start; grid-auto-flow: column; justify-content: space-between; }
+    }

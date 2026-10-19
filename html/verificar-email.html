@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirmar e-mail — Anima Cantus</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./shared.js"></script>
+</head>
+<body>
+
+  <!-- Ícones usados nesta página -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+  <div class="auth">
+
+    <aside class="auth__panel">
+      <a class="auth__brand" href="acesso.html" aria-label="Anima Cantus">
+        <span>Anima</span> <span>Cantus</span>
+      </a>
+      <svg class="auth__staff" viewBox="0 0 800 100" preserveAspectRatio="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="1">
+          <line x1="0" y1="10" x2="800" y2="10"/><line x1="0" y1="30" x2="800" y2="30"/><line x1="0" y1="50" x2="800" y2="50"/><line x1="0" y1="70" x2="800" y2="70"/><line x1="0" y1="90" x2="800" y2="90"/>
+        </g>
+      </svg>
+      <div class="auth__quote">
+        <p class="auth__quote-text">A música acompanha cada etapa da história de vocês.</p>
+      </div>
+    </aside>
+
+    <main class="auth__main">
+      <div class="auth__box">
+
+        <!-- Aguardando o clique no link enviado por e-mail -->
+        <section id="st-pending" hidden>
+          <span class="status-icon"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg></span>
+          <p class="eyebrow eyebrow--green">Confirmação de e-mail</p>
+          <h1 class="heading-serif auth__title">Confirme seu e-mail</h1>
+          <p class="auth__sub">Enviamos um link de confirmação para <strong id="email-shown">o seu e-mail</strong>. Abra a mensagem e clique no link para ativar a conta.</p>
+          <div class="auth__actions">
+            <button class="btn btn--primary" type="button" data-resend>Reenviar e-mail</button>
+            <a class="btn btn--secondary" href="acesso.html#cadastro">Usar outro e-mail</a>
+          </div>
+          <p class="alert alert--success" id="resent" role="status" hidden style="margin-top: 1rem;"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span>Enviamos um novo link. Confira também a caixa de spam.</span></p>
+          <p class="auth__foot">Não chegou? Confira a caixa de spam ou peça um novo link. O link de confirmação tem prazo de validade.</p>
+        </section>
+
+        <!-- Validando o token da URL (?token=...) -->
+        <section id="st-verifying" hidden aria-live="polite">
+          <span class="status-icon status-icon--warn"><span class="spinner" aria-hidden="true"></span></span>
+          <p class="eyebrow eyebrow--green">Confirmação de e-mail</p>
+          <h1 class="heading-serif auth__title">Confirmando seu e-mail…</h1>
+          <p class="auth__sub">Só um instante.</p>
+        </section>
+
+        <section id="st-success" hidden>
+          <span class="status-icon"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <p class="eyebrow eyebrow--green">Confirmação de e-mail</p>
+          <h1 class="heading-serif auth__title">E-mail confirmado</h1>
+          <p class="auth__sub">Tudo certo! Sua conta está ativa e vocês já podem começar a jornada.</p>
+          <div class="auth__actions">
+            <a class="btn btn--primary" id="go" href="acesso.html">Entrar <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          </div>
+        </section>
+
+        <section id="st-error" hidden>
+          <span class="status-icon status-icon--error"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg></span>
+          <p class="eyebrow eyebrow--green">Confirmação de e-mail</p>
+          <h1 class="heading-serif auth__title">Link inválido ou expirado</h1>
+          <p class="auth__sub">Não foi possível confirmar o e-mail com este link. Peça um novo para continuar.</p>
+          <div class="auth__actions">
+            <button class="btn btn--primary" type="button" data-resend id="resend-error">Reenviar e-mail</button>
+            <a class="btn btn--secondary" href="acesso.html">Voltar para entrar</a>
+          </div>
+          <p class="alert alert--success" id="resent-error" role="status" hidden style="margin-top: 1rem;"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg><span>Enviamos um novo link. Confira também a caixa de spam.</span></p>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var $ = function (s) { return document.querySelector(s); };
+      var params = new URLSearchParams(location.search);
+      var token = params.get('token');
+      var perfil = AC.store.get('perfil') || {};
+      var email = params.get('email') || perfil.email || '';
+
+      function set(state) {
+        ['pending', 'verifying', 'success', 'error'].forEach(function (s) { $('#st-' + s).hidden = s !== state; });
+        document.title = { pending: 'Confirme seu e-mail', verifying: 'Confirmando e-mail', success: 'E-mail confirmado', error: 'Link inválido' }[state] + ' — Anima Cantus';
+      }
+
+      if (email) $('#email-shown').textContent = email;
+      // Sem e-mail conhecido não dá para reenviar: o usuário volta ao cadastro/entrada.
+      if (!email) $('#resend-error').hidden = true;
+
+      [].forEach.call(document.querySelectorAll('[data-resend]'), function (btn) {
+        btn.addEventListener('click', function () {
+          if (!email) return;
+          // TODO: POST /verificar-email/reenviar { email }
+          var ok = btn.id === 'resend-error' ? $('#resent-error') : $('#resent');
+          ok.hidden = false;
+          AC.cooldown(btn, 60, 'Reenviar e-mail');
+        });
+      });
+
+      if (token) {
+        set('verifying');
+        // TODO: POST /verificar-email { token } -> 200 confirma; 400/410 = inválido ou expirado.
+        // No protótipo, qualquer token confirma, exceto "expirado".
+        setTimeout(function () {
+          if (token === 'expirado') return set('error');
+          if (AC.store.get('sessao')) $('#go').setAttribute('href', 'minha-jornada.html');
+          $('#go').firstChild.textContent = AC.store.get('sessao') ? 'Ir para minha jornada ' : 'Entrar ';
+          set('success');
+        }, 900);
+      } else {
+        set('pending');
+      }
+    })();
+  </script>
+</body>
+</html>

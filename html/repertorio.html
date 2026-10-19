@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repertório — Anima Cantus</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./shared.js"></script>
+
+  <style>
+    /* ===== Particular: Repertório ===== */
+
+    /* Aviso de prazo */
+    .deadline {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--peach-line);
+      border-radius: var(--radius);
+      background: var(--peach);
+      color: var(--amber-ink);
+    }
+
+    .deadline > .icon { font-size: 1.25rem; }
+    .deadline__text { flex: 1; min-width: 0; }
+    .deadline__title { color: var(--ink); font-size: 0.875rem; font-weight: 500; }
+    .deadline__sub { color: var(--muted); font-size: 0.75rem; }
+    .deadline__count { font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
+
+    /* Cabeçalho da lista */
+    .moments__header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .search {
+      position: relative;
+      width: min(100%, 13.75rem);
+    }
+
+    .search .icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    .search input {
+      width: 100%;
+      height: 2.25rem;
+      padding: 0 0.75rem 0 2.125rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-size: 0.8125rem;
+    }
+
+    .search input::placeholder { color: var(--muted); }
+
+    /* Lista de momentos */
+    .moments { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+
+    .moment {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.875rem 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .moment:first-child { border-top: 0; }
+    .moment__text { flex: 1; min-width: 0; }
+    .moment__name { font-size: 0.875rem; font-weight: 500; }
+    .moment__song { color: var(--muted); font-size: 0.75rem; }
+
+    .moment__chevron {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .moment__chevron:hover { background: var(--sand-soft); }
+    .moments__empty { padding: 1.5rem 1rem; color: var(--muted); font-size: 0.8125rem; }
+
+    .moments__save { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+
+    /* Coluna lateral */
+    .aside { display: grid; gap: 1rem; }
+
+    .inspiration .icon { font-size: 1.25rem; }
+    .inspiration .eyebrow { margin-top: 1rem; }
+    .inspiration__title { margin: 0.25rem 0 1rem; font-size: 1.625rem; }
+
+    .overall__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.75rem; }
+    .overall__title { font-size: 0.875rem; font-weight: 500; }
+    .overall__value { font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; }
+    .overall__note { margin-top: 0.75rem; color: var(--muted); font-size: 0.75rem; }
+
+    /* Diálogo de escolha */
+    .picker {
+      width: min(92vw, 26.25rem);
+      padding: 1.5rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .picker::backdrop { background: rgb(30 30 28 / 0.35); }
+    .picker__title { font-size: 1.625rem; }
+    .picker__label { display: block; margin: 1rem 0 0.375rem; font-size: 0.8125rem; font-weight: 500; }
+
+    .picker input {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .picker__actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; }
+
+    @media (max-width: 600px) {
+      .search { width: 100%; }
+      .deadline { align-items: flex-start; flex-wrap: wrap; }
+      .deadline__count { width: 100%; padding-left: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ícones usados nesta página -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-list-music" viewBox="0 0 24 24"><path d="M21 15V6"/><circle cx="18.5" cy="17.5" r="2.5"/><path d="M12 12H3"/><path d="M16 6H3"/><path d="M12 18H3"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+
+  <div class="shell">
+
+    <aside class="sidebar">
+      <a class="brand" href="minha-jornada.html" aria-label="Anima Cantus — início">
+        <span>Anima</span> <span>Cantus</span>
+      </a>
+      <div class="sidebar__actions">
+        <button class="icon-btn" type="button" aria-label="Notificações"><svg class="icon"><use href="#i-bell"/></svg></button>
+        <button class="icon-btn" type="button" aria-label="Sair da conta" data-logout><svg class="icon"><use href="#i-logout"/></svg></button>
+      </div>
+      <nav class="nav" aria-label="Principal">
+        <a href="minha-jornada.html"><svg class="icon"><use href="#i-home"/></svg>Minha jornada</a>
+        <a href="contrato.html"><svg class="icon"><use href="#i-file"/></svg>Contrato</a>
+        <a href="repertorio.html" aria-current="page"><svg class="icon"><use href="#i-list-music"/></svg>Repertório</a>
+      </nav>
+      <div class="sidebar__foot">
+        <p class="sidebar__user"><span>Conectados como</span><strong data-couple>Marina &amp; Rafael</strong></p>
+        <button class="btn btn--secondary btn--sm sidebar__logout" type="button" data-logout><svg class="icon"><use href="#i-logout"/></svg>Sair da conta</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="container">
+
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Etapa 3 de 5</p>
+            <h1 class="page-title">Nosso repertório</h1>
+          </div>
+          <button class="icon-btn" type="button" aria-label="Notificações">
+            <svg class="icon"><use href="#i-bell"/></svg>
+          </button>
+        </header>
+
+        <div class="deadline" role="note">
+          <svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg>
+          <div class="deadline__text">
+            <p class="deadline__title">Complete até 21 de outubro</p>
+            <p class="deadline__sub">Janela recomendada: 16 a 21 de outubro de 2026</p>
+          </div>
+          <p class="deadline__count" id="count-label">3 de 6 escolhidas</p>
+        </div>
+
+        <div class="split">
+
+          <section aria-labelledby="moments-title">
+            <div class="moments__header">
+              <div>
+                <p class="eyebrow">Cerimônia</p>
+                <h2 class="section-title" id="moments-title">Momentos musicais</h2>
+              </div>
+              <label class="search">
+                <span class="sr-only">Buscar música</span>
+                <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+                <input type="search" id="search" placeholder="Buscar música" autocomplete="off">
+              </label>
+            </div>
+
+            <ul class="moments" id="moments"></ul>
+
+            <div class="moments__save">
+              <button class="btn btn--secondary" type="button" id="save">Salvar progresso</button>
+            </div>
+          </section>
+
+          <div class="aside">
+            <aside class="card card--green inspiration">
+              <svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg>
+              <p class="eyebrow">Inspiração</p>
+              <h2 class="heading-serif inspiration__title">Dicas de músicas para cada momento</h2>
+              <!-- TODO: ligar à página/modal de sugestões -->
+              <button class="btn btn--sand" type="button">Ver sugestões <svg class="icon"><use href="#i-arrow-right"/></svg></button>
+            </aside>
+
+            <section class="card" aria-labelledby="overall-title">
+              <div class="overall__head">
+                <h2 class="overall__title" id="overall-title">Progresso</h2>
+                <span class="overall__value" id="percent">50%</span>
+              </div>
+              <div class="progress" role="progressbar" id="bar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" aria-labelledby="overall-title">
+                <span class="progress__fill" id="fill" style="--value: 50%"></span>
+              </div>
+              <p class="overall__note">Suas escolhas são salvas e podem ser retomadas a qualquer momento.</p>
+            </section>
+          </div>
+
+        </div>
+
+        <footer class="page-footer">
+          <svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg>
+          A música acompanha cada etapa da história de vocês.
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <dialog class="picker" id="picker" aria-labelledby="picker-title">
+    <form method="dialog" id="picker-form">
+      <h2 class="heading-serif picker__title" id="picker-title">Escolher música</h2>
+      <label class="picker__label" for="picker-input" id="picker-moment"></label>
+      <input type="text" id="picker-input" placeholder="Nome da música" required>
+      <div class="picker__actions">
+        <button class="btn btn--secondary" type="button" id="picker-cancel">Cancelar</button>
+        <button class="btn btn--primary" type="submit">Salvar escolha</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    (function () {
+      // TODO: carregar/salvar no back-end. Aqui o estado vive só na página.
+      var moments = [
+        { name: 'Entrada dos padrinhos', song: 'Marcha Nupcial' },
+        { name: 'Entrada do noivo',      song: 'Ave Maria' },
+        { name: 'Entrada da noiva',      song: 'Perfect' },
+        { name: 'Alianças',              song: '' },
+        { name: 'Assinaturas',           song: '' },
+        { name: 'Saída dos noivos',      song: '' }
+      ];
+
+      var list = document.getElementById('moments');
+      var search = document.getElementById('search');
+      var picker = document.getElementById('picker');
+      var pickerInput = document.getElementById('picker-input');
+      var pickerMoment = document.getElementById('picker-moment');
+      var editing = -1;
+
+      var ICON = function (id) { return '<svg class="icon" aria-hidden="true"><use href="#' + id + '"/></svg>'; };
+      var esc = function (s) { return s.replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+      var norm = function (s) { return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+
+      function render() {
+        var q = norm(search.value.trim());
+        var html = '';
+
+        moments.forEach(function (m, i) {
+          if (q && norm(m.name + ' ' + m.song).indexOf(q) === -1) return;
+          var done = !!m.song;
+
+          html += '<li class="moment">' +
+            '<span class="marker ' + (done ? 'marker--soft' : '') + '">' + (done ? ICON('i-music') : (i + 1)) + '</span>' +
+            '<div class="moment__text"><p class="moment__name">' + esc(m.name) + '</p>' +
+            '<p class="moment__song">' + (done ? esc(m.song) : 'Nenhuma música escolhida') + '</p></div>' +
+            (done
+              ? '<button class="moment__chevron" type="button" data-i="' + i + '" aria-label="Alterar música: ' + esc(m.name) + '">' + ICON('i-chevron') + '</button>'
+              : '<button class="btn btn--secondary btn--sm" type="button" data-i="' + i + '" aria-label="Escolher música: ' + esc(m.name) + '">' + ICON('i-plus') + 'Escolher</button>') +
+            '</li>';
+        });
+
+        list.innerHTML = html || '<li class="moments__empty">Nenhuma música encontrada para essa busca.</li>';
+        updateProgress();
+      }
+
+      function updateProgress() {
+        var chosen = moments.filter(function (m) { return m.song; }).length;
+        var pct = Math.round((chosen / moments.length) * 100);
+        document.getElementById('count-label').textContent = chosen + ' de ' + moments.length + ' escolhidas';
+        document.getElementById('percent').textContent = pct + '%';
+        document.getElementById('fill').style.setProperty('--value', pct + '%');
+        document.getElementById('bar').setAttribute('aria-valuenow', pct);
+      }
+
+      list.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-i]');
+        if (!btn) return;
+        editing = +btn.dataset.i;
+        pickerMoment.textContent = moments[editing].name;
+        pickerInput.value = moments[editing].song;
+        picker.showModal();
+        pickerInput.focus();
+      });
+
+      document.getElementById('picker-cancel').addEventListener('click', function () { picker.close(); });
+
+      document.getElementById('picker-form').addEventListener('submit', function () {
+        var value = pickerInput.value.trim();
+        if (editing > -1 && value) moments[editing].song = value;
+        render();
+      });
+
+      var save = document.getElementById('save');
+      save.addEventListener('click', function () {
+        // TODO: persistir `moments` no back-end.
+        save.textContent = 'Progresso salvo';
+        setTimeout(function () { save.textContent = 'Salvar progresso'; }, 2000);
+      });
+
+      search.addEventListener('input', render);
+      render();
+    })();
+  </script>
+</body>
+</html>

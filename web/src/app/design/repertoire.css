@@ -1,0 +1,132 @@
+/* ===== Particular: RepertÃ³rio ===== */
+
+    /* Aviso de prazo */
+    .deadline {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--peach-line);
+      border-radius: var(--radius);
+      background: var(--peach);
+      color: var(--amber-ink);
+    }
+
+    .deadline > .icon { font-size: 1.25rem; }
+    .deadline__text { flex: 1; min-width: 0; }
+    .deadline__title { color: var(--ink); font-size: 0.875rem; font-weight: 500; }
+    .deadline__sub { color: var(--muted); font-size: 0.75rem; }
+    .deadline__count { font-size: 0.75rem; font-weight: 500; white-space: nowrap; }
+
+    /* CabeÃ§alho da lista */
+    .moments__header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .search {
+      position: relative;
+      width: min(100%, 13.75rem);
+    }
+
+    .search .icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.875rem;
+      pointer-events: none;
+    }
+
+    .search input {
+      width: 100%;
+      height: 2.25rem;
+      padding: 0 0.75rem 0 2.125rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      font-size: 0.8125rem;
+    }
+
+    .search input::placeholder { color: var(--muted); }
+
+    /* Lista de momentos */
+    .moments { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+
+    .moment {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.875rem 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .moment:first-child { border-top: 0; }
+    .moment__text { flex: 1; min-width: 0; }
+    .moment__name { font-size: 0.875rem; font-weight: 500; }
+    .moment__song { color: var(--muted); font-size: 0.75rem; }
+
+    .moment__chevron {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border: 0;
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .moment__chevron:hover { background: var(--sand-soft); }
+    .moments__empty { padding: 1.5rem 1rem; color: var(--muted); font-size: 0.8125rem; }
+
+    .moments__save { display: flex; justify-content: flex-end; margin-top: 1.25rem; }
+
+    /* Coluna lateral */
+    .aside { display: grid; gap: 1rem; }
+
+    .inspiration .icon { font-size: 1.25rem; }
+    .inspiration .eyebrow { margin-top: 1rem; }
+    .inspiration__title { margin: 0.25rem 0 1rem; font-size: 1.625rem; }
+
+    .overall__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.75rem; }
+    .overall__title { font-size: 0.875rem; font-weight: 500; }
+    .overall__value { font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; }
+    .overall__note { margin-top: 0.75rem; color: var(--muted); font-size: 0.75rem; }
+
+    /* DiÃ¡logo de escolha */
+    .picker {
+      width: min(92vw, 26.25rem);
+      padding: 1.5rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    .picker::backdrop { background: rgb(30 30 28 / 0.35); }
+    .picker__title { font-size: 1.625rem; }
+    .picker__label { display: block; margin: 1rem 0 0.375rem; font-size: 0.8125rem; font-weight: 500; }
+
+    .picker input {
+      width: 100%;
+      height: 2.5rem;
+      padding: 0 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .picker__actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; }
+
+    @media (max-width: 600px) {
+      .search { width: 100%; }
+      .deadline { align-items: flex-start; flex-wrap: wrap; }
+      .deadline__count { width: 100%; padding-left: 2rem; }
+    }

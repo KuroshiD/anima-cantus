@@ -1,0 +1,206 @@
+/* ===== Particular: Acesso (login / cadastro) ===== */
+
+    .auth {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    /* Painel verde (identidade) */
+    .auth__panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 3rem;
+      padding: 2.5rem clamp(1.5rem, 5vw, 6rem);
+      background: var(--green);
+      color: var(--green-ink);
+      overflow: hidden;
+    }
+
+    .auth__brand {
+      position: relative;
+      z-index: 1;
+      font-family: var(--font-display);
+      font-size: 2.6rem;
+      font-weight: 500;
+      line-height: 0.95;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .auth__brand span { display: block; }
+
+    .auth__quote {
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth__quote-eyebrow {
+      margin-bottom: 0.75rem;
+      color: rgb(255 255 255 / 0.7);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .auth__quote-text {
+      font-family: var(--font-display);
+      max-width: 12em;
+      font-size: 2.75rem;
+      font-weight: 500;
+      line-height: 1.12;
+    }
+
+    /* Pauta musical decorativa */
+    .auth__staff {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 36%;
+      height: 6rem;
+      color: #fff;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    /* Lado do formulÃ¡rio */
+    .auth__main {
+      display: grid;
+      place-items: center;
+      padding: 2.5rem clamp(1.25rem, 5vw, 6rem);
+    }
+
+    .auth__box { width: 100%; max-width: 27rem; }
+
+    .auth__title { font-size: 2.5rem; }
+    .auth__sub { margin-top: 0.5rem; color: var(--muted); }
+    .auth__eyebrow { color: var(--green); font-weight: 600; }
+
+    /* Abas Entrar / Criar conta */
+    .auth__tabs {
+      display: flex;
+      margin: 2rem 0 1.75rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .auth__tab {
+      flex: 1;
+      padding: 0.75rem 0.5rem;
+      margin-bottom: -1px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .auth__tab:hover { color: var(--ink); }
+
+    .auth__tab[aria-selected="true"] {
+      border-bottom-color: var(--green);
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* FormulÃ¡rio */
+    .form { display: grid; gap: 1.1rem; }
+    .form[hidden] { display: none; }
+    .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .field { display: grid; gap: 0.4rem; }
+    .field__label { font-size: 0.8125rem; font-weight: 500; }
+
+    .field__control { position: relative; }
+
+    .input {
+      width: 100%;
+      height: 2.75rem;
+      padding: 0 0.875rem;
+      border: 1px solid #d6cfc2;
+      border-radius: var(--radius-btn);
+      background: var(--surface);
+      font-size: 0.875rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input::placeholder { color: #a39c90; }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgb(51 83 62 / 0.15);
+    }
+
+    .input[aria-invalid="true"] { border-color: #b3261e; }
+    .input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgb(179 38 30 / 0.15); }
+
+    .field__control .input { padding-right: 2.75rem; }
+    input[type="email"].input,
+    input[type="text"].input:not(.has-toggle),
+    input[type="date"].input { padding-right: 0.875rem; }
+
+    .field__toggle {
+      position: absolute;
+      top: 50%;
+      right: 0.25rem;
+      display: grid;
+      place-items: center;
+      width: 2.25rem;
+      height: 2.25rem;
+      transform: translateY(-50%);
+      border: 0;
+      border-radius: var(--radius-btn);
+      background: transparent;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    .field__toggle:hover { color: var(--ink); background: var(--sand-soft); }
+
+    .field__error { min-height: 0; color: #b3261e; font-size: 0.75rem; }
+    .field__error:empty { display: none; }
+    .field__hint { color: var(--muted); font-size: 0.75rem; }
+
+    .form__aux {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.8125rem;
+    }
+
+    .form__aux .link { padding: 0; border: 0; background: transparent; }
+
+    .link { color: var(--green); font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+    .link:hover { color: #2a4634; }
+
+    .check { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.8125rem; color: var(--muted); }
+    .check input { width: 1.1rem; height: 1.1rem; margin-top: 0.1rem; accent-color: var(--green); flex: none; }
+    .check.is-invalid { color: #b3261e; }
+
+    .form__submit { width: 100%; min-height: 2.75rem; margin-top: 0.25rem; }
+    .form__submit[disabled] { opacity: 0.7; cursor: progress; }
+
+    .form__switch { margin-top: 0.25rem; text-align: center; color: var(--muted); font-size: 0.8125rem; }
+    .form__switch button { padding: 0; border: 0; background: none; }
+
+    .auth__foot { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.75rem; }
+
+    /* Mobile: o painel vira uma faixa no topo */
+    @media (max-width: 900px) {
+      .auth { grid-template-columns: 1fr; min-height: 0; }
+      .auth__panel { gap: 1.5rem; padding: 1.5rem 1.25rem 1.75rem; }
+      .auth__brand { font-size: 2.2rem; }
+      .auth__quote-text { font-size: 1.5rem; max-width: 16em; }
+      .auth__quote-eyebrow { display: none; }
+      .auth__staff { display: none; }
+      .auth__main { place-items: start center; padding: 2rem 1.25rem 3rem; }
+      .auth__title { font-size: 2.1rem; }
+    }
+
+    @media (max-width: 480px) {
+      .form__row { grid-template-columns: 1fr; }
+    }

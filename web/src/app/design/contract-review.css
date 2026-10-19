@@ -1,0 +1,20 @@
+/* ===== Particular: Contrato Â· ConferÃªncia ===== */
+    .review { display: grid; gap: 0; }
+    .review__section { padding: 1.25rem 0; border-top: 1px solid var(--line); }
+    .review__section:first-child { padding-top: 0; border-top: 0; }
+
+    .review__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+    .review__title { color: var(--muted); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+    .review__edit { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8125rem; }
+
+    .review dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem 1.5rem; margin: 0; }
+    .review dt { color: var(--muted); font-size: 0.75rem; }
+    .review dd { margin: 0.1rem 0 0; font-size: 0.875rem; font-weight: 500; word-break: break-word; }
+    .review .wide { grid-column: 1 / -1; }
+
+    .confirm { margin-top: 1.5rem; padding: 1rem; border-radius: var(--radius); background: var(--sand-soft); color: var(--ink); }
+    .confirm .check { color: var(--ink); }
+
+    .blocked { text-align: left; }
+
+    @media (max-width: 600px) { .review dl { grid-template-columns: 1fr; } }

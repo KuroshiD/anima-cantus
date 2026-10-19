@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Redefinir senha — Anima Cantus</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./shared.css">
+  <script src="./shared.js"></script>
+</head>
+<body>
+
+  <!-- Ícones usados nesta página -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 8.7-8.7M16 7l3 3"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 6.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.7C3.9 8.5 2 12 2 12s3.5 7 10 7c1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+  <div class="auth">
+
+    <aside class="auth__panel">
+      <a class="auth__brand" href="acesso.html" aria-label="Anima Cantus">
+        <span>Anima</span> <span>Cantus</span>
+      </a>
+      <svg class="auth__staff" viewBox="0 0 800 100" preserveAspectRatio="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="1">
+          <line x1="0" y1="10" x2="800" y2="10"/><line x1="0" y1="30" x2="800" y2="30"/><line x1="0" y1="50" x2="800" y2="50"/><line x1="0" y1="70" x2="800" y2="70"/><line x1="0" y1="90" x2="800" y2="90"/>
+        </g>
+      </svg>
+      <div class="auth__quote">
+        <p class="auth__quote-text">A música acompanha cada etapa da história de vocês.</p>
+      </div>
+    </aside>
+
+    <main class="auth__main">
+      <div class="auth__box">
+
+        <!-- 1. Pedir o link (sem ?token) -->
+        <section id="st-request" hidden>
+          <p class="eyebrow eyebrow--green">Recuperar acesso</p>
+          <h1 class="heading-serif auth__title">Esqueceu a senha?</h1>
+          <p class="auth__sub">Informe o e-mail da conta e enviaremos um link para criar uma nova senha.</p>
+          <form class="form" id="req" novalidate style="margin-top: 1.75rem;">
+            <div class="field">
+              <label class="field__label" for="req-email">E-mail</label>
+              <input class="input" id="req-email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" data-rules="required email" aria-describedby="req-email-err">
+              <p class="field__error" id="req-email-err" role="alert"></p>
+            </div>
+            <button class="btn btn--primary form__submit" type="submit">Enviar link <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+            <p class="form__switch" style="text-align:center;"><a class="link" href="acesso.html">Voltar para entrar</a></p>
+          </form>
+        </section>
+
+        <!-- 2. Link enviado -->
+        <section id="st-sent" hidden>
+          <span class="status-icon"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg></span>
+          <p class="eyebrow eyebrow--green">Recuperar acesso</p>
+          <h1 class="heading-serif auth__title">Verifique seu e-mail</h1>
+          <p class="auth__sub">Se houver uma conta com <strong id="sent-email">esse e-mail</strong>, enviamos um link para redefinir a senha. Ele tem prazo de validade.</p>
+          <div class="auth__actions">
+            <button class="btn btn--secondary" type="button" id="resend">Reenviar e-mail</button>
+            <a class="link" href="acesso.html" style="text-align:center;">Voltar para entrar</a>
+          </div>
+        </section>
+
+        <!-- 3. Definir a nova senha (?token=...) -->
+        <section id="st-reset" hidden>
+          <p class="eyebrow eyebrow--green">Recuperar acesso</p>
+          <h1 class="heading-serif auth__title">Crie uma nova senha</h1>
+          <p class="auth__sub">Escolha uma senha para voltar a acessar a área do casal.</p>
+          <form class="form" id="reset" novalidate style="margin-top: 1.75rem;">
+            <div class="field">
+              <label class="field__label" for="new-senha">Nova senha</label>
+              <div class="field__control">
+                <input class="input has-toggle" id="new-senha" name="senha" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" data-rules="required min8" aria-describedby="new-senha-err">
+                <button class="field__toggle" type="button" data-toggle="new-senha" aria-label="Mostrar senha"><svg class="icon" aria-hidden="true"><use href="#i-eye"/></svg></button>
+              </div>
+              <p class="field__error" id="new-senha-err" role="alert"></p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="new-senha2">Confirmar nova senha</label>
+              <input class="input" id="new-senha2" name="senha2" type="password" autocomplete="new-password" placeholder="Repita a senha" data-rules="required match:new-senha" aria-describedby="new-senha2-err">
+              <p class="field__error" id="new-senha2-err" role="alert"></p>
+            </div>
+            <p class="alert alert--error" id="reset-error" role="alert" hidden><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span>Não foi possível salvar a senha. Tente novamente.</span></p>
+            <button class="btn btn--primary form__submit" type="submit">Salvar nova senha <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+          </form>
+        </section>
+
+        <!-- 4. Senha atualizada -->
+        <section id="st-done" hidden>
+          <span class="status-icon"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span>
+          <p class="eyebrow eyebrow--green">Recuperar acesso</p>
+          <h1 class="heading-serif auth__title">Senha atualizada</h1>
+          <p class="auth__sub">Pronto! Entre com a nova senha para continuar a jornada de vocês.</p>
+          <div class="auth__actions">
+            <a class="btn btn--primary" href="acesso.html">Entrar <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          </div>
+        </section>
+
+        <!-- 5. Link inválido/expirado -->
+        <section id="st-invalid" hidden>
+          <span class="status-icon status-icon--error"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg></span>
+          <p class="eyebrow eyebrow--green">Recuperar acesso</p>
+          <h1 class="heading-serif auth__title">Link inválido ou expirado</h1>
+          <p class="auth__sub">Este link de redefinição não vale mais. Peça um novo para continuar.</p>
+          <div class="auth__actions">
+            <a class="btn btn--primary" href="redefinir-senha.html">Pedir novo link</a>
+            <a class="btn btn--secondary" href="acesso.html">Voltar para entrar</a>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var $ = function (s) { return document.querySelector(s); };
+      var token = new URLSearchParams(location.search).get('token');
+      var STATES = ['request', 'sent', 'reset', 'done', 'invalid'];
+      var TITLES = { request: 'Redefinir senha', sent: 'Verifique seu e-mail', reset: 'Nova senha', done: 'Senha atualizada', invalid: 'Link inválido' };
+
+      function set(state) {
+        STATES.forEach(function (s) { $('#st-' + s).hidden = s !== state; });
+        document.title = TITLES[state] + ' — Anima Cantus';
+        var first = document.querySelector('#st-' + state + ' .input');
+        if (first) first.focus();
+      }
+
+      /* Pedido do link */
+      var sentTo = '';
+      AC.bindForm($('#req'), function (form, data) {
+        AC.submitting(form, 'Enviando… ');
+        sentTo = data.email;
+        // TODO: POST /redefinir-senha/solicitar { email }. A resposta é sempre a mesma,
+        //       exista ou não a conta (não revelar quais e-mails estão cadastrados).
+        setTimeout(function () {
+          $('#sent-email').textContent = sentTo;
+          AC.idle(form);
+          set('sent');
+        }, 700);
+      });
+
+      $('#resend').addEventListener('click', function () {
+        // TODO: repetir o POST /redefinir-senha/solicitar
+        AC.cooldown(this, 60, 'Reenviar e-mail');
+      });
+
+      /* Nova senha */
+      AC.bindForm($('#reset'), function (form, data) {
+        $('#reset-error').hidden = true;
+        AC.submitting(form, 'Salvando… ');
+        // TODO: POST /redefinir-senha { token, senha } -> 200 ok; 400/410 = token inválido/expirado.
+        setTimeout(function () {
+          if (token === 'expirado') return set('invalid');
+          AC.idle(form);
+          set('done');
+        }, 800);
+      });
+
+      /* Estado inicial */
+      if (!token) set('request');
+      else if (token === 'expirado') set('invalid'); // TODO: validar o token na API ao abrir a página
+      else set('reset');
+    })();
+  </script>
+</body>
+</html>

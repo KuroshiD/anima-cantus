@@ -1,0 +1,84 @@
+/* ===== Particular: Minha jornada ===== */
+
+    /* Card "prÃ³xima etapa" */
+    .next-step {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "label  label"
+        "title  action"
+        "desc   action"
+        "bar    bar";
+      column-gap: 1.5rem;
+      align-items: center;
+    }
+
+    .next-step__label { grid-area: label; margin-bottom: 0.25rem; color: var(--muted); font-size: 0.9375rem; }
+    .next-step__title { grid-area: title; font-size: 1.625rem; }
+    .next-step__desc  { grid-area: desc; margin-top: 0.5rem; color: var(--muted); font-size: 0.8125rem; max-width: 46ch; }
+    .next-step__action { grid-area: action; align-self: center; }
+
+    .next-step__progress {
+      grid-area: bar;
+      margin-top: 1.75rem;
+    }
+
+    .next-step__progress-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    /* Card contagem regressiva */
+    .countdown {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .countdown .icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .countdown__label { font-size: 0.8125rem; color: rgb(255 255 255 / 0.75); }
+    .countdown__number {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 500;
+      line-height: 1.05;
+    }
+    .countdown__caption { margin-top: 0.25rem; font-size: 0.875rem; }
+
+    /* Lista da jornada */
+    .journey { margin-top: 2.5rem; }
+
+    .journey__header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .journey__list { border-top: 1px solid var(--line); background: var(--surface); }
+
+    .journey__item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 0.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .journey__text { flex: 1; min-width: 0; }
+    .journey__name { font-size: 0.875rem; font-weight: 500; }
+    .journey__desc { color: var(--muted); font-size: 0.75rem; }
+
+    @media (max-width: 600px) {
+      .next-step {
+        grid-template-columns: 1fr;
+        grid-template-areas: "label" "title" "desc" "action" "bar";
+      }
+      .next-step__action { margin-top: 1rem; }
+      .next-step__action .btn { width: 100%; }
+    }

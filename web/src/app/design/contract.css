@@ -1,0 +1,151 @@
+/* ===== Particular: Contrato ===== */
+
+    /* Abas das etapas do contrato */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+
+    .tabs a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.625rem 1rem;
+      margin-bottom: -1px;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 0.8125rem;
+      white-space: nowrap;
+    }
+
+    .tabs a:hover { color: var(--ink); }
+    .tabs a .icon { font-size: 0.75rem; }
+
+    .tabs a[aria-current="step"] {
+      border-bottom-color: var(--green);
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* Card principal */
+    .sign__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .sign__top > .icon { font-size: 1.75rem; color: var(--green); }
+
+    .sign__title { margin-top: 1rem; }
+    .sign__desc { margin-top: 0.5rem; color: var(--muted); font-size: 0.875rem; max-width: 52ch; }
+
+    .sign__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+
+    .sign__steps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 2rem;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .sign__step { display: flex; align-items: center; gap: 0.625rem; font-size: 0.75rem; }
+    .sign__step .marker { width: 1.75rem; height: 1.75rem; }
+
+    /* Ãrea de envio */
+    .dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      margin-top: 1.5rem;
+      padding: 2rem 1rem;
+      border: 1px dashed #d6cbb8;
+      border-radius: var(--radius);
+      background: var(--sand-soft);
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .dropzone[hidden] { display: none; }
+
+    .dropzone:hover,
+    .dropzone.is-over { background: var(--sand); border-color: var(--green); }
+    .dropzone:has(input:focus-visible) { outline: 2px solid var(--green); outline-offset: 2px; }
+
+    .dropzone .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .dropzone__title { font-size: 0.875rem; font-weight: 500; }
+    .dropzone__hint { color: var(--muted); font-size: 0.75rem; }
+    .dropzone__error { color: #b3261e; font-size: 0.75rem; min-height: 1.2em; margin-top: 0.5rem; }
+
+    .upload-ready {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--sand-soft);
+    }
+
+    .upload-ready.is-visible { display: flex; }
+    .upload-ready__name { font-size: 0.875rem; font-weight: 500; word-break: break-all; }
+    .upload-ready__actions { display: flex; gap: 0.5rem; }
+
+    @media (max-width: 600px) {
+      .tabs { gap: 0; justify-content: space-between; scrollbar-width: none; }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tabs a { padding: 0.75rem 0.4rem; font-size: 0.78rem; }
+      .sign__steps { flex-direction: column; gap: 1rem; }
+      .sign__step { font-size: 0.9rem; }
+      .sign__step .marker { width: 2.25rem; height: 2.25rem; }
+    }
+
+    /* Resumo da contrataÃ§Ã£o */
+    .summary__title { margin-bottom: 1rem; color: var(--muted); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    .summary__row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.375rem 0;
+      font-size: 0.8125rem;
+    }
+
+    .summary__row dt { color: var(--muted); }
+    .summary__row dd { margin: 0; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+    .summary__total {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-top: 0.75rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .summary__total-label { font-size: 0.8125rem; font-weight: 500; }
+    .summary__total-value { font-family: var(--font-display); font-size: 1.75rem; font-weight: 500; }
+    .summary__words { margin-top: 0.25rem; color: var(--muted); font-size: 0.75rem; }
+
+    .summary__note {
+      display: flex;
+      gap: 0.625rem;
+      margin-top: 1.25rem;
+      padding: 0.75rem;
+      border-radius: var(--radius);
+      background: var(--sand-soft);
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .summary__note .icon { font-size: 1rem; margin-top: 1px; }
