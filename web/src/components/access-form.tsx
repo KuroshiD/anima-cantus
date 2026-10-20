@@ -477,7 +477,7 @@ export function AccessForm() {
             ) : null}
           </form>
 
-          <p className="auth__foot">Seus dados são usados apenas para organizar a música da cerimônia de vocês.</p>
+          <p className="auth__foot">Seus dados são usados apenas para organizar a música da cerimônia de vocês. <Link className="link" href="/orcamento">Peça um orçamento</Link>.</p>
         </div>
       </main>
     </div>

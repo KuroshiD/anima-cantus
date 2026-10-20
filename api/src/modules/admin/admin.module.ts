@@ -172,6 +172,18 @@ class AdminController {
     return this.prisma.alertConfig.findUnique({ where: { id: "default" } });
   }
 
+  @Get("dicas")
+  async tips() {
+    const [moments, tips] = await Promise.all([
+      this.prisma.ceremonyMoment.findMany({ orderBy: { sortOrder: "asc" } }),
+      this.prisma.musicTip.findMany({
+        include: { moment: true },
+        orderBy: [{ moment: { sortOrder: "asc" } }, { title: "asc" }],
+      }),
+    ]);
+    return { moments, tips };
+  }
+
   @Patch("conteudo/:key")
   content(@Param("key") key: string, @Body() body: ContentDto) {
     return this.prisma.siteContent.upsert({
@@ -179,6 +191,11 @@ class AdminController {
       create: { key, value: body.value },
       update: { value: body.value },
     });
+  }
+
+  @Get("galeria")
+  gallery() {
+    return this.prisma.galleryItem.findMany({ orderBy: [{ sortOrder: "asc" }, { title: "asc" }] });
   }
 
   @Post("dicas")

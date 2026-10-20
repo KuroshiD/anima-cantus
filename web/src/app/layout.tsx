@@ -11,6 +11,8 @@ import "./design/contract-services.css";
 import "./design/contract-review.css";
 import "./design/repertoire.css";
 import "./design/access.css";
+import "./design/management.css";
+import "./design/quote.css";
 
 export const metadata: Metadata = {
   title: "Anima Cantus",

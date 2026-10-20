@@ -1,0 +1,13 @@
+.quote__intro { max-width: 42rem; margin: 0.5rem 0 2rem; color: var(--muted); }
+.quote__planner { margin-top: 1rem; color: var(--ink); }
+.quote__consent { margin-top: 1.5rem; }
+.quote__sent { min-height: 20rem; }
+.quote__sent-message { max-width: 34rem; margin-top: 0.5rem; }
+.quote__sent-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+.quote__how .steps { display: grid; gap: 1.25rem; margin-top: 1.25rem; }
+.quote__how .steps li { display: flex; align-items: flex-start; gap: 0.875rem; }
+.steps__title { font-size: 0.875rem; font-weight: 500; }
+.steps__desc { color: var(--muted); font-size: 0.8125rem; }
+.quote__honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.quote__honeypot input { position: absolute; left: -9999px; }
+.quote .split { margin-top: 0; }

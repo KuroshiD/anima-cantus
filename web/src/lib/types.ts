@@ -97,3 +97,46 @@ export interface AdminCoupleDetailData {
     validations: { accepted: boolean; reason: string | null; createdAt: string; admin: { email: string } }[];
   } | null;
 }
+
+export interface ServiceItemView {
+  id: string;
+  name: string;
+  description: string | null;
+  kind: "PACOTE" | "SERVICO" | "ADICIONAL";
+  priceCents: number;
+  active: boolean;
+  sortOrder: number;
+}
+
+export interface AdminTipView {
+  id: string;
+  momentId: string | null;
+  title: string;
+  artist: string | null;
+  note: string | null;
+  active: boolean;
+  moment: { id: string; name: string; sortOrder: number } | null;
+}
+
+export interface AdminGalleryView {
+  id: string;
+  title: string;
+  mediaUrl: string;
+  kind: string;
+  altText: string;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface AdminTipsResponse {
+  moments: { id: string; name: string; sortOrder: number }[];
+  tips: AdminTipView[];
+}
+
+export interface PublicContentView {
+  pages: Record<string, string>;
+  tips: { id: string; title: string; artist: string | null; note: string | null; moment: string }[];
+  gallery: AdminGalleryView[];
+  whatsAppPhone: string;
+  instagram: string;
+}

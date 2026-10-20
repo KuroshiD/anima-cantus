@@ -54,12 +54,8 @@ export function AdminCoupleDetail({ couple }: { couple: AdminCoupleDetailData })
   }
 
   return (
-    <div className="admin">
-      <header className="legal__bar">
-        <Link className="legal__brand" href="/admin" aria-label="Anima Cantus"><span>Anima</span><span>Cantus</span></Link>
-        <Link className="btn btn--secondary btn--sm" href="/admin">Voltar ao painel</Link>
-      </header>
-      <main className="admin__main">
+      <section className="admin__main">
+        <div className="admin-back"><Link className="link" href="/admin">← Voltar ao painel</Link></div>
         <p className="eyebrow">Acompanhamento da jornada</p>
         <h1 className="page-title">{couple.partnerOne} &amp; {couple.partnerTwo}</h1>
         {error ? <p className="field__error" role="alert">{error}</p> : null}
@@ -126,7 +122,6 @@ export function AdminCoupleDetail({ couple }: { couple: AdminCoupleDetailData })
             </button>
           </section>
         ) : null}
-      </main>
-    </div>
+      </section>
   );
 }

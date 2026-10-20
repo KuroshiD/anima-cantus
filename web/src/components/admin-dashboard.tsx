@@ -1,49 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { apiSend, clearCsrf, readError } from "../lib/client-api";
 import type { AdminCoupleRow } from "../lib/types";
 
 export function AdminDashboard({ couples, loadError }: { couples: AdminCoupleRow[]; loadError: string }) {
-  const router = useRouter();
-  const [error, setError] = useState(loadError);
-  const [busy, setBusy] = useState(false);
-
-  async function logout() {
-    setBusy(true);
-    setError("");
-    try {
-      const response = await apiSend("/auth/logout", { method: "POST" });
-      if (!response.ok) {
-        setError(await readError(response));
-        return;
-      }
-      clearCsrf();
-      router.replace("/acesso");
-      router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Não foi possível sair da conta.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const withAlerts = couples.filter((couple) => couple.flags.length > 0).length;
   const pendingContracts = couples.filter((couple) => couple.contractStatus === "AGUARDANDO_VALIDACAO").length;
 
   return (
-    <div className="admin">
-      <header className="legal__bar">
-        <Link className="legal__brand" href="/admin" aria-label="Anima Cantus"><span>Anima</span><span>Cantus</span></Link>
-        <button className="btn btn--secondary btn--sm" type="button" onClick={() => void logout()} disabled={busy}>{busy ? "Saindo..." : "Sair"}</button>
-      </header>
-      <main className="admin__main">
+      <section className="admin__main">
         <header className="page-header">
           <div><p className="eyebrow">Anima Cantus</p><h1 className="page-title">Painel administrativo</h1></div>
         </header>
-        {error ? <p className="field__error" role="alert">{error}</p> : null}
+        {loadError ? <p className="field__error" role="alert">{loadError}</p> : null}
         <section className="admin__stats" aria-label="Resumo">
           <article className="card admin__stat"><span>Casais acompanhados</span><strong>{couples.length}</strong></article>
           <article className="card admin__stat"><span>Contratos em conferência</span><strong>{pendingContracts}</strong></article>
@@ -71,7 +40,6 @@ export function AdminDashboard({ couples, loadError }: { couples: AdminCoupleRow
             </div>
           )}
         </section>
-      </main>
-    </div>
+      </section>
   );
 }
