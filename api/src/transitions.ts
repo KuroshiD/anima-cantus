@@ -1,4 +1,3 @@
-import { ConflictException } from "@nestjs/common";
 import type { StageStatus } from "@anima/shared";
 
 const contractTransitions: Record<string, StageStatus[]> = {
@@ -6,21 +5,24 @@ const contractTransitions: Record<string, StageStatus[]> = {
   AGUARDANDO_VALIDACAO: ["CONCLUIDA", "EM_ANDAMENTO"],
 };
 
-export function assertContractTransition(from: string, to: StageStatus): void {
+export type ContractTransitionResult =
+  | { ok: true }
+  | { ok: false; reason: "INVALID_CONTRACT_TRANSITION" };
+
+export function contractTransition(from: string, to: StageStatus): ContractTransitionResult {
   if (!contractTransitions[from]?.includes(to)) {
-    throw new ConflictException("O contrato não está em um estado que permita essa ação.");
+    return { ok: false, reason: "INVALID_CONTRACT_TRANSITION" };
   }
+  return { ok: true };
 }
 
 export function journeyAfterContractDecision(accepted: boolean): {
   contract: StageStatus;
   repertorio?: { from: StageStatus; to: StageStatus };
 } {
-  if (accepted) {
-    return {
-      contract: "CONCLUIDA",
-      repertorio: { from: "PENDENTE", to: "EM_ANDAMENTO" },
-    };
-  }
-  return { contract: "EM_ANDAMENTO" };
+  if (!accepted) return { contract: "EM_ANDAMENTO" };
+  return {
+    contract: "CONCLUIDA",
+    repertorio: { from: "PENDENTE", to: "EM_ANDAMENTO" },
+  };
 }

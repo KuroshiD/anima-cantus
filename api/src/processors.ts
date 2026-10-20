@@ -2,14 +2,13 @@ import { Processor, WorkerHost, InjectQueue } from "@nestjs/bullmq";
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { Job, Queue, UnrecoverableError } from "bullmq";
 import { createHash } from "crypto";
-import { formatBRL, formatDateBR } from "@anima/shared";
+import { formatBRL, formatDateBR, isoDate } from "@anima/shared";
 import { PrismaService } from "./prisma.service";
 import { StorageService } from "./storage.service";
 import { NotificationJob, NotificationsService } from "./notifications.service";
 import { ReconcileService } from "./reconcile.service";
 import { buildContractPdf } from "./pdf";
 import { scanBuffer } from "./clam";
-import { isoDate } from "./dates.util";
 
 interface SnapshotItem {
   name: string;

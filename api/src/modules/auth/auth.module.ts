@@ -27,6 +27,7 @@ import {
   resetPasswordSchema,
   verifyEmailSchema,
   anniversaryIso,
+  asDate,
   repertoireWindow,
 } from "@anima/shared";
 import { PrismaService } from "../../prisma.service";
@@ -147,7 +148,7 @@ export class AuthService implements OnModuleInit {
     const email = input.email.toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ForbiddenException("Já existe uma conta com esse e-mail.");
-    const wedding = new Date(`${input.weddingDate}T00:00:00.000Z`);
+    const wedding = asDate(input.weddingDate);
     const window = repertoireWindow(input.weddingDate);
     const passwordHash = await argon2.hash(input.password, { type: argon2.argon2id });
     const user = await this.prisma.$transaction(async (tx) => {
@@ -174,9 +175,9 @@ export class AuthService implements OnModuleInit {
       await tx.journey.create({
         data: {
           coupleId: couple.id,
-          repertoireWindowStart: new Date(`${window.start}T00:00:00.000Z`),
-          repertoireWindowEnd: new Date(`${window.end}T00:00:00.000Z`),
-          anniversarySendOn: new Date(`${anniversaryIso(input.weddingDate)}T00:00:00.000Z`),
+          repertoireWindowStart: asDate(window.start),
+          repertoireWindowEnd: asDate(window.end),
+          anniversarySendOn: asDate(anniversaryIso(input.weddingDate)),
           steps: {
             create: [
               { step: "CADASTRO", status: "CONCLUIDA" },

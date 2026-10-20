@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { anniversaryIso, daysUntil, repertoireWindow } from "./dates";
+import { anniversaryIso, asDate, daysUntil, isIsoOnOrAfter, isoDate, localIsoDate, repertoireWindow } from "./dates";
 import { budgetWhatsAppText, whatsAppLink } from "./whatsapp";
 
 describe("janela do repertório", () => {
@@ -19,6 +19,17 @@ describe("janela do repertório", () => {
     expect(daysUntil("2026-10-18", new Date(2026, 9, 18))).toBe(0);
     expect(daysUntil("2026-10-17", new Date(2026, 9, 18))).toBe(0);
     expect(daysUntil("2026-11-20", new Date(2026, 9, 18))).toBe(33);
+  });
+
+  it("grava e lê a data civil em meia-noite UTC", () => {
+    expect(asDate("2026-11-20T15:00:00.000Z").toISOString()).toBe("2026-11-20T00:00:00.000Z");
+    expect(isoDate(asDate("2026-11-20"))).toBe("2026-11-20");
+  });
+
+  it("compara a data com o calendário local informado", () => {
+    expect(localIsoDate(new Date(2026, 9, 20, 23, 30))).toBe("2026-10-20");
+    expect(isIsoOnOrAfter("2026-10-20", "2026-10-20")).toBe(true);
+    expect(isIsoOnOrAfter("2026-10-19", "2026-10-20")).toBe(false);
   });
 });
 

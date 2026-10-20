@@ -1,5 +1,6 @@
 import {
   Body,
+  ConflictException,
   Controller,
   Get,
   Header,
@@ -16,13 +17,14 @@ import { createZodDto } from "nestjs-zod";
 import {
   alertConfigSchema,
   contentWriteSchema,
+  classifyRepertoireDeadline,
   formatBRL,
   formatDateBR,
   galleryWriteSchema,
+  isoDate,
   musicTipWriteSchema,
   rejectContractSchema,
   todayIso,
-  addDaysIso,
 } from "@anima/shared";
 import { PrismaService } from "../../prisma.service";
 import { StorageService } from "../../storage.service";
@@ -30,8 +32,7 @@ import { NotificationsService } from "../../notifications.service";
 import { ReconcileService } from "../../reconcile.service";
 import { AuthModule, SessionGuard } from "../auth/auth.module";
 import { Roles, RolesGuard, type AuthUser } from "../../security";
-import { isoDate } from "../../dates.util";
-import { assertContractTransition, journeyAfterContractDecision } from "../../transitions";
+import { contractTransition, journeyAfterContractDecision } from "../../transitions";
 import { Req } from "@nestjs/common";
 import type { Request } from "express";
 
@@ -75,11 +76,20 @@ class AdminController {
       const steps = Object.fromEntries((couple.journey?.steps ?? []).map((step) => [step.step, step.status]));
       const chosen = couple.selections.filter((selection) => selection.songTitle.trim()).length;
       const end = couple.journey?.repertoireWindowEnd ? isoDate(couple.journey.repertoireWindowEnd) : null;
+      const deadline = end
+        ? classifyRepertoireDeadline({
+            status: String(steps.REPERTORIO ?? ""),
+            filledCount: chosen,
+            momentCount: moments,
+            windowEnd: end,
+            today,
+            leadDays: lead,
+          })
+        : "none";
       const flags: string[] = [];
       if (couple.contract?.status === "AGUARDANDO_VALIDACAO") flags.push("Contrato aguardando conferência");
-      if (steps.REPERTORIO === "EM_ANDAMENTO" && end && chosen < moments && today >= addDaysIso(end, -lead)) {
-        flags.push(today > end ? "Repertório atrasado" : "Repertório perto do prazo");
-      }
+      if (deadline === "overdue") flags.push("Repertório atrasado");
+      if (deadline === "approaching") flags.push("Repertório perto do prazo");
       if (isoDate(couple.weddingDate) < today && steps.CASAMENTO !== "CONCLUIDA") flags.push("Casamento ainda não registrado");
       return {
         id: couple.id,
@@ -251,7 +261,10 @@ class AdminController {
       include: { couple: { include: { user: true, journey: { include: { steps: true } } } } },
     });
     const next = accepted ? "CONCLUIDA" : "EM_ANDAMENTO";
-    assertContractTransition(contract.status, next);
+    const transition = contractTransition(contract.status, next);
+    if (!transition.ok) {
+      throw new ConflictException("O contrato não está em um estado que permita essa ação.");
+    }
     const effect = journeyAfterContractDecision(accepted);
     const steps = contract.couple.journey?.steps ?? [];
     await this.prisma.$transaction(async (tx) => {

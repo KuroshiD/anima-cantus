@@ -1,10 +1,9 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { addDaysIso, anniversaryIso, formatDateBR, repertoireWindow, todayIso } from "@anima/shared";
+import { anniversaryIso, asDate, classifyRepertoireDeadline, formatDateBR, isoDate, repertoireWindow, todayIso } from "@anima/shared";
 import { PrismaService } from "./prisma.service";
 import { NotificationsService, type NotificationJob } from "./notifications.service";
-import { isoDate } from "./dates.util";
 
 @Injectable()
 export class ReconcileService {
@@ -45,9 +44,9 @@ export class ReconcileService {
         await this.prisma.journey.update({
           where: { id: couple.journey.id },
           data: {
-            repertoireWindowStart: new Date(`${window.start}T00:00:00.000Z`),
-            repertoireWindowEnd: new Date(`${window.end}T00:00:00.000Z`),
-            anniversarySendOn: new Date(`${anniversary}T00:00:00.000Z`),
+            repertoireWindowStart: asDate(window.start),
+            repertoireWindowEnd: asDate(window.end),
+            anniversarySendOn: asDate(anniversary),
           },
         });
       }
@@ -55,8 +54,16 @@ export class ReconcileService {
       const repertoire = couple.journey.steps.find((step) => step.step === "REPERTORIO");
       const chosen = couple.selections.filter((selection) => selection.songTitle.trim()).length;
       const email = couple.user?.email;
-      if (email && repertoire?.status === "EM_ANDAMENTO" && chosen < moments && today >= addDaysIso(window.end, -lead)) {
-        const overdue = today > window.end;
+      const deadline = classifyRepertoireDeadline({
+        status: repertoire?.status ?? "",
+        filledCount: chosen,
+        momentCount: moments,
+        windowEnd: window.end,
+        today,
+        leadDays: lead,
+      });
+      if (email && deadline !== "none") {
+        const overdue = deadline === "overdue";
         reminders += 1;
         await this.notifications.enqueue("deadlines", "remind", {
           type: overdue ? "REPERTOIRE_OVERDUE" : "REPERTOIRE_REMINDER",

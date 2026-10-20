@@ -122,3 +122,9 @@ export function requireUser(request: { user?: AuthUser }): AuthUser {
   if (!request.user) throw new UnauthorizedException("Faça login para continuar.");
   return request.user;
 }
+
+export function requireCoupleId(request: { user?: AuthUser }): string {
+  const user = requireUser(request);
+  if (!user.coupleId) throw new ForbiddenException("Esta área é do casal.");
+  return user.coupleId;
+}

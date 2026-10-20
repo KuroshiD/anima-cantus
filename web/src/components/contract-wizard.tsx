@@ -3,6 +3,8 @@
 import {
   contractDraftSchema,
   formatBRL,
+  isIsoOnOrAfter,
+  localIsoDate,
   valorPorExtenso,
   type ContractDraftInput,
 } from "@anima/shared";
@@ -66,14 +68,8 @@ function formatPhone(value: string): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
-function isTodayOrLater(value: string): boolean {
-  const today = new Date();
-  const todayIso = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
-  return value >= todayIso;
+function isTodayOrLater(value: string, now = new Date()): boolean {
+  return isIsoOnOrAfter(value, localIsoDate(now));
 }
 
 function formatDate(value: string): string {

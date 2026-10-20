@@ -1,6 +1,6 @@
 "use client";
 
-import { forgotPasswordSchema, LEGAL_VERSION, loginSchema, registerSchema } from "@anima/shared";
+import { forgotPasswordSchema, isIsoOnOrAfter, LEGAL_VERSION, localIsoDate, loginSchema, registerSchema } from "@anima/shared";
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -137,14 +137,8 @@ export function AccessForm() {
       termsVersion: termsAccepted ? LEGAL_VERSION : "",
     });
     const nextErrors: FieldErrors = parsed.success ? {} : errorsFromIssues(parsed.error.issues);
-    if (weddingDate) {
-      const today = new Date();
-      const todayIso = [
-        today.getFullYear(),
-        String(today.getMonth() + 1).padStart(2, "0"),
-        String(today.getDate()).padStart(2, "0"),
-      ].join("-");
-      if (weddingDate < todayIso) nextErrors.weddingDate = "Escolha uma data a partir de hoje.";
+    if (weddingDate && !isIsoOnOrAfter(weddingDate, localIsoDate(new Date()))) {
+      nextErrors.weddingDate = "Escolha uma data a partir de hoje.";
     }
     if (password !== passwordConfirmation) nextErrors.passwordConfirmation = "As senhas não coincidem.";
     if (!termsAccepted) nextErrors.terms = "Aceite os termos para continuar.";

@@ -3,7 +3,6 @@ import {
   Body,
   ConflictException,
   Controller,
-  ForbiddenException,
   Get,
   Header,
   Module,
@@ -23,9 +22,11 @@ import { Queue } from "bullmq";
 import { randomUUID } from "crypto";
 import type { Request } from "express";
 import {
+  asDate,
   contractDraftSchema,
   formatBRL,
   formatDateBR,
+  isoDate,
   sumPrices,
   uploadConfirmSchema,
   uploadIntentSchema,
@@ -35,8 +36,7 @@ import {
 import { PrismaService } from "../../prisma.service";
 import { StorageService } from "../../storage.service";
 import { AuthModule, SessionGuard } from "../auth/auth.module";
-import { requireUser, type AuthUser } from "../../security";
-import { asDate, isoDate } from "../../dates.util";
+import { requireCoupleId, type AuthUser } from "../../security";
 import { anniversaryIso, repertoireWindow } from "@anima/shared";
 import type { Prisma } from "@prisma/client";
 
@@ -45,12 +45,6 @@ class UploadIntentDto extends createZodDto(uploadIntentSchema) {}
 class UploadConfirmDto extends createZodDto(uploadConfirmSchema) {}
 
 type AuthRequest = Request & { user?: AuthUser };
-
-function coupleId(req: AuthRequest): string {
-  const user = requireUser(req);
-  if (!user.coupleId) throw new ForbiddenException("Esta área é do casal.");
-  return user.coupleId;
-}
 
 @ApiTags("contratos")
 @Controller("contratos")
@@ -65,19 +59,19 @@ class ContractsController {
 
   @Get("me")
   async mine(@Req() req: AuthRequest) {
-    return this.present(coupleId(req));
+    return this.present(requireCoupleId(req));
   }
 
   @Get("me/previa")
   async preview(@Req() req: AuthRequest) {
-    const contract = await this.load(coupleId(req));
+    const contract = await this.load(requireCoupleId(req));
     const priced = await this.price(contract.items.map((item) => item.serviceId), contract.discountCents);
     return priced;
   }
 
   @Put("me/rascunho")
   async save(@Req() req: AuthRequest, @Body() body: DraftDto) {
-    const id = coupleId(req);
+    const id = requireCoupleId(req);
     const contract = await this.load(id);
     if (contract.status !== "EM_ANDAMENTO") {
       throw new ConflictException("O contrato não pode ser alterado neste status.");
@@ -118,7 +112,7 @@ class ContractsController {
 
   @Post("me/gerar")
   async generate(@Req() req: AuthRequest) {
-    const id = coupleId(req);
+    const id = requireCoupleId(req);
     const contract = await this.load(id);
     if (contract.status !== "EM_ANDAMENTO") throw new ConflictException("O contrato não pode ser gerado neste status.");
     const couple = contract.couple;
@@ -153,7 +147,7 @@ class ContractsController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post("me/upload-url")
   async uploadUrl(@Req() req: AuthRequest, @Body() body: UploadIntentDto) {
-    const contract = await this.load(coupleId(req));
+    const contract = await this.load(requireCoupleId(req));
     if (contract.status !== "EM_ANDAMENTO") throw new ConflictException("O envio não está disponível neste status.");
     if (!contract.snapshots.length) throw new BadRequestException("Gere o contrato antes de enviar o arquivo assinado.");
     if (!body.fileName.toLowerCase().endsWith(".pdf")) throw new BadRequestException("Envie um arquivo PDF.");
@@ -165,7 +159,7 @@ class ContractsController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post("me/upload-confirmar")
   async confirm(@Req() req: AuthRequest, @Body() body: UploadConfirmDto) {
-    const contract = await this.load(coupleId(req));
+    const contract = await this.load(requireCoupleId(req));
     const prefix = `contracts/${contract.id}/signed/`;
     if (!body.key.startsWith(prefix) || body.key.includes("..")) throw new BadRequestException("Arquivo inválido.");
     const snapshot = contract.snapshots[0];
@@ -181,7 +175,7 @@ class ContractsController {
   @Header("Cache-Control", "no-store")
   async download(@Req() req: AuthRequest, @Param("fileId") fileId: string): Promise<StreamableFile> {
     const file = await this.prisma.contractFile.findFirst({
-      where: { id: fileId, contract: { coupleId: coupleId(req) } },
+      where: { id: fileId, contract: { coupleId: requireCoupleId(req) } },
     });
     if (!file) throw new NotFoundException("Arquivo não encontrado.");
     const stored = await this.storage.read(file.objectKey);

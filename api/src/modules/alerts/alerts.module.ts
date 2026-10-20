@@ -1,11 +1,10 @@
 import { Controller, Get, Module, Req, UseGuards } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import type { Request } from "express";
-import { addDaysIso, formatDateBR, todayIso } from "@anima/shared";
+import { classifyRepertoireDeadline, formatDateBR, isoDate, todayIso } from "@anima/shared";
 import { PrismaService } from "../../prisma.service";
 import { AuthModule, SessionGuard } from "../auth/auth.module";
 import { requireUser, type AuthUser } from "../../security";
-import { isoDate } from "../../dates.util";
 
 type AuthRequest = Request & { user?: AuthUser };
 
@@ -41,12 +40,22 @@ class AlertsController {
     const repertoire = journey?.steps.find((step) => step.step === "REPERTORIO");
     const end = journey?.repertoireWindowEnd ? isoDate(journey.repertoireWindowEnd) : null;
     const lead = config?.reminderLeadDays ?? 7;
-    if (repertoire?.status === "EM_ANDAMENTO" && end && selections < moments && todayIso() >= addDaysIso(end, -lead)) {
-      alerts.push({
-        id: "deadline",
-        title: todayIso() > end ? "Repertório fora do prazo" : "Prazo do repertório",
-        detail: `A janela recomendada termina em ${formatDateBR(end)}. Faltam ${moments - selections} música(s).`,
+    if (end) {
+      const deadline = classifyRepertoireDeadline({
+        status: repertoire?.status ?? "",
+        filledCount: selections,
+        momentCount: moments,
+        windowEnd: end,
+        today: todayIso(),
+        leadDays: lead,
       });
+      if (deadline !== "none") {
+        alerts.push({
+          id: "deadline",
+          title: deadline === "overdue" ? "Repertório fora do prazo" : "Prazo do repertório",
+          detail: `A janela recomendada termina em ${formatDateBR(end)}. Faltam ${moments - selections} música(s).`,
+        });
+      }
     }
     return alerts;
   }

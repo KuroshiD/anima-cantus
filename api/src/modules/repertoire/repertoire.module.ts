@@ -2,11 +2,10 @@ import { Body, Controller, ForbiddenException, Get, Module, Post, Put, Req, UseG
 import { ApiTags } from "@nestjs/swagger";
 import { createZodDto } from "nestjs-zod";
 import type { Request } from "express";
-import { formatDateBR, repertoireSaveSchema } from "@anima/shared";
+import { formatDateBR, isoDate, repertoireSaveSchema } from "@anima/shared";
 import { PrismaService } from "../../prisma.service";
 import { AuthModule, SessionGuard } from "../auth/auth.module";
-import { requireUser, type AuthUser } from "../../security";
-import { isoDate } from "../../dates.util";
+import { requireCoupleId, type AuthUser } from "../../security";
 
 class SaveDto extends createZodDto(repertoireSaveSchema) {}
 type AuthRequest = Request & { user?: AuthUser };
@@ -19,7 +18,7 @@ class RepertoireController {
 
   @Get()
   async get(@Req() req: AuthRequest) {
-    const coupleId = this.couple(req);
+    const coupleId = requireCoupleId(req);
     const [moments, selections, journey, config] = await Promise.all([
       this.prisma.ceremonyMoment.findMany({
         orderBy: { sortOrder: "asc" },
@@ -95,14 +94,8 @@ class RepertoireController {
     return { message: "Repertório concluído." };
   }
 
-  private couple(req: AuthRequest): string {
-    const user = requireUser(req);
-    if (!user.coupleId) throw new ForbiddenException("Esta área é do casal.");
-    return user.coupleId;
-  }
-
   private async assertOpen(req: AuthRequest): Promise<string> {
-    const coupleId = this.couple(req);
+    const coupleId = requireCoupleId(req);
     const journey = await this.prisma.journey.findUniqueOrThrow({ where: { coupleId }, include: { steps: true } });
     const contract = journey.steps.find((step) => step.step === "CONTRATO");
     const repertoire = journey.steps.find((step) => step.step === "REPERTORIO");

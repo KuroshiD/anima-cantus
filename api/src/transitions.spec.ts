@@ -1,11 +1,16 @@
-import { ConflictException } from "@nestjs/common";
-import { assertContractTransition, journeyAfterContractDecision } from "./transitions";
+import { contractTransition, journeyAfterContractDecision } from "./transitions";
 
 describe("transições do contrato", () => {
   it("só avança de em andamento para aguardando validação", () => {
-    expect(() => assertContractTransition("EM_ANDAMENTO", "AGUARDANDO_VALIDACAO")).not.toThrow();
-    expect(() => assertContractTransition("CONCLUIDA", "EM_ANDAMENTO")).toThrow(ConflictException);
-    expect(() => assertContractTransition("EM_ANDAMENTO", "CONCLUIDA")).toThrow(ConflictException);
+    expect(contractTransition("EM_ANDAMENTO", "AGUARDANDO_VALIDACAO")).toEqual({ ok: true });
+    expect(contractTransition("CONCLUIDA", "EM_ANDAMENTO")).toEqual({
+      ok: false,
+      reason: "INVALID_CONTRACT_TRANSITION",
+    });
+    expect(contractTransition("EM_ANDAMENTO", "CONCLUIDA")).toEqual({
+      ok: false,
+      reason: "INVALID_CONTRACT_TRANSITION",
+    });
   });
 
   it("recusa volta para em andamento e aceite libera o repertório", () => {

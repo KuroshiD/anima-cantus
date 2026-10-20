@@ -51,3 +51,23 @@ export function todayIso(timeZone = "America/Sao_Paulo", now = new Date()): stri
     day: "2-digit",
   }).format(now);
 }
+
+export function isoDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+export function asDate(iso: string): Date {
+  return new Date(`${iso.slice(0, 10)}T00:00:00.000Z`);
+}
+
+// A validação da tela usa o calendário local do navegador; o agendamento segue todayIso.
+export function localIsoDate(now: Date): string {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function isIsoOnOrAfter(value: string, today: string): boolean {
+  return value >= today;
+}
