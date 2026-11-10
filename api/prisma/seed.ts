@@ -15,10 +15,16 @@ async function main(): Promise<void> {
   const adminPassword = await argon2.hash("Admin@12345", { type: argon2.argon2id });
 
   const services = await Promise.all([
-    prisma.serviceItem.create({ data: { name: "Pacote completo", description: "Cerimônia com a formação principal", kind: "PACOTE", priceCents: 350_000, sortOrder: 1 } }),
+    prisma.serviceItem.create({ data: { name: "Pacote completo", description: "3 vozes, violão e piano", kind: "PACOTE", priceCents: 350_000, sortOrder: 1 } }),
     prisma.serviceItem.create({ data: { name: "Instrumentista adicional", description: "Um músico a mais na formação", kind: "ADICIONAL", priceCents: 40_000, sortOrder: 2 } }),
     prisma.serviceItem.create({ data: { name: "Recepção", description: "Música na recepção", kind: "ADICIONAL", priceCents: 80_000, sortOrder: 3 } }),
   ]);
+  await prisma.serviceOption.createMany({
+    data: [
+      { serviceId: services[1].id, label: "1 violinista", priceCents: 30_000, sortOrder: 1 },
+      { serviceId: services[1].id, label: "2 violinistas", priceCents: 45_000, sortOrder: 2 },
+    ],
+  });
 
   const momentNames = ["Entrada dos padrinhos", "Entrada do noivo", "Entrada da noiva", "Alianças", "Assinaturas", "Saída dos noivos"];
   const moments = [];

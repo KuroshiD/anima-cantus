@@ -114,6 +114,8 @@ model Couple {
   weddingTime  String?  @map("wedding_time")
   venue        String?
   formation    String?
+  additionalInstrumentistType String? @map("additional_instrumentist_type")
+  additionalInstrumentistOptionId String? @map("additional_instrumentist_option_id")
   paymentTerms String?  @map("payment_terms")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -161,10 +163,26 @@ model ServiceItem {
   active      Boolean     @default(true)
   sortOrder   Int         @default(0) @map("sort_order")
   items       ContractItem[]
+  options     ServiceOption[]
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
 
   @@map("service_item")
+}
+
+model ServiceOption {
+  id         String      @id @default(uuid()) @db.Uuid
+  serviceId  String      @map("service_id") @db.Uuid
+  service    ServiceItem @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  label      String
+  priceCents Int         @map("price_cents")
+  active     Boolean     @default(true)
+  sortOrder  Int         @default(0) @map("sort_order")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  @@index([serviceId, active])
+  @@map("service_option")
 }
 
 model Contract {
@@ -211,6 +229,7 @@ model ContractSnapshot {
   weddingTime   String?  @map("wedding_time")
   venue         String
   formation     String?
+  additionalInstrumentistType String? @map("additional_instrumentist_type")
   address       String
   email         String
   phone         String
@@ -336,9 +355,10 @@ model SiteContent {
 }
 
 model AlertConfig {
-  id               String   @id @default("default")
-  reminderLeadDays Int      @default(7) @map("reminder_lead_days")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default("default")
+  reminderLeadDays      Int      @default(7) @map("reminder_lead_days")
+  maxWeddingAdvanceDays Int      @default(120) @map("max_wedding_advance_days")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   @@map("alert_config")
 }

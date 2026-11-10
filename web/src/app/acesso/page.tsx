@@ -9,9 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default async function AccessPage() {
-  const session = await serverApi<SessionState>("/auth/me");
+  const [session, dateConfig] = await Promise.all([
+    serverApi<SessionState>("/auth/me"),
+    serverApi<{ maxWeddingAdvanceDays: number }>("/configuracao/datas"),
+  ]);
   if (session.data?.authenticated) {
     redirect(session.data.role === "ADMIN" ? "/admin" : "/jornada");
   }
-  return <AccessForm />;
+  return <AccessForm maxWeddingAdvanceDays={dateConfig.data?.maxWeddingAdvanceDays ?? 120} />;
 }

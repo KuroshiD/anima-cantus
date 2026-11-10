@@ -1,11 +1,12 @@
 "use client";
 
-import { forgotPasswordSchema, isIsoOnOrAfter, LEGAL_VERSION, localIsoDate, loginSchema, registerSchema } from "@anima/shared";
+import { addDaysIso, forgotPasswordSchema, isIsoWithinAdvanceDays, LEGAL_VERSION, localIsoDate, loginSchema, registerSchema } from "@anima/shared";
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiSend, readError, rememberCsrf } from "../lib/client-api";
 import { Icon } from "./icons";
+import { formatPhone } from "../lib/input-masks";
 
 type AccessMode = "login" | "register" | "forgot";
 type FieldErrors = Record<string, string>;
@@ -14,7 +15,7 @@ function errorsFromIssues(issues: { path: PropertyKey[]; message: string }[]): F
   return Object.fromEntries(issues.map((issue) => [String(issue.path[0]), issue.message]));
 }
 
-export function AccessForm() {
+export function AccessForm({ maxWeddingAdvanceDays }: { maxWeddingAdvanceDays: number }) {
   const router = useRouter();
   const [mode, setMode] = useState<AccessMode>("login");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -137,8 +138,8 @@ export function AccessForm() {
       termsVersion: termsAccepted ? LEGAL_VERSION : "",
     });
     const nextErrors: FieldErrors = parsed.success ? {} : errorsFromIssues(parsed.error.issues);
-    if (weddingDate && !isIsoOnOrAfter(weddingDate, localIsoDate(new Date()))) {
-      nextErrors.weddingDate = "Escolha uma data a partir de hoje.";
+    if (weddingDate && !isIsoWithinAdvanceDays(weddingDate, localIsoDate(new Date()), maxWeddingAdvanceDays)) {
+      nextErrors.weddingDate = `Escolha uma data entre hoje e os próximos ${maxWeddingAdvanceDays} dias.`;
     }
     if (password !== passwordConfirmation) nextErrors.passwordConfirmation = "As senhas não coincidem.";
     if (!termsAccepted) nextErrors.terms = "Aceite os termos para continuar.";
@@ -310,11 +311,12 @@ export function AccessForm() {
                     name="phone"
                     type="tel"
                     autoComplete="tel"
+                    inputMode="tel"
                     placeholder="(16) 99999-9999"
                     value={phone}
                     {...inputError("phone")}
                     onChange={(event) => {
-                      setPhone(event.target.value);
+                      setPhone(formatPhone(event.target.value));
                       clearFieldError("phone");
                     }}
                   />
@@ -328,6 +330,8 @@ export function AccessForm() {
                     name="weddingDate"
                     type="date"
                     autoComplete="off"
+                    min={localIsoDate(new Date())}
+                    max={addDaysIso(localIsoDate(new Date()), maxWeddingAdvanceDays)}
                     value={weddingDate}
                     {...inputError("weddingDate")}
                     onChange={(event) => {

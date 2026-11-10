@@ -172,8 +172,15 @@ class AdminController {
   alerts(@Body() body: AlertDto) {
     return this.prisma.alertConfig.upsert({
       where: { id: "default" },
-      create: { id: "default", reminderLeadDays: body.reminderLeadDays },
-      update: { reminderLeadDays: body.reminderLeadDays },
+      create: {
+        id: "default",
+        reminderLeadDays: body.reminderLeadDays,
+        maxWeddingAdvanceDays: body.maxWeddingAdvanceDays,
+      },
+      update: {
+        reminderLeadDays: body.reminderLeadDays,
+        maxWeddingAdvanceDays: body.maxWeddingAdvanceDays,
+      },
     });
   }
 

@@ -55,18 +55,15 @@ export const contractDraftSchema = z.object({
   documentId: z
     .string()
     .trim()
-    .refine((value) => {
-      const digits = value.replace(/\D/g, "");
-      return digits.length === 11 || digits.length === 14;
-    }, "Informe um CPF ou CNPJ."),
+    .refine(isValidCpf, "Informe um CPF válido."),
   address: z.string().trim().min(5, "Informe o endereço."),
   email: z.string().trim().email("Informe um e-mail válido."),
-  phone: z.string().trim().min(8, "Informe um telefone."),
   weddingDate: isoDate,
   weddingTime: z.string().trim().min(4, "Informe o horário."),
   venue: z.string().trim().min(2, "Informe o local."),
   formation: z.string().trim().max(200).optional().or(z.literal("")),
-  paymentTerms: z.string().trim().min(3, "Informe a condição de pagamento."),
+  additionalInstrumentistType: z.string().trim().max(160).optional().or(z.literal("")),
+  additionalInstrumentistOptionId: z.string().uuid().optional().or(z.literal("")),
   serviceIds: z.array(z.string().uuid()).min(1, "Selecione ao menos um serviço."),
 });
 
@@ -104,8 +101,16 @@ export const serviceWriteSchema = z.object({
   sortOrder: z.number().int().optional(),
 });
 
+export const serviceOptionWriteSchema = z.object({
+  label: z.string().trim().min(2).max(160),
+  priceCents: z.number().int().nonnegative(),
+  active: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
 export const alertConfigSchema = z.object({
   reminderLeadDays: z.number().int().min(0).max(60),
+  maxWeddingAdvanceDays: z.number().int().min(1).max(3650),
 });
 
 export const contentWriteSchema = z.object({
@@ -128,6 +133,22 @@ export const galleryWriteSchema = z.object({
   sortOrder: z.number().int().optional(),
   active: z.boolean().optional(),
 });
+
+export function isValidCpf(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;
+
+  const calculateDigit = (length: number): number => {
+    const sum = digits
+      .slice(0, length)
+      .split("")
+      .reduce((total, digit, index) => total + Number(digit) * (length + 1 - index), 0);
+    const remainder = (sum * 10) % 11;
+    return remainder === 10 ? 0 : remainder;
+  };
+
+  return calculateDigit(9) === Number(digits[9]) && calculateDigit(10) === Number(digits[10]);
+}
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

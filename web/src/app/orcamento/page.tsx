@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicBudgetForm } from "../../components/public-budget-form";
+import { serverApi } from "../../lib/server-api";
 
 export const metadata: Metadata = { title: "Pedir orçamento — Anima Cantus" };
 
-export default function BudgetPage() {
+export default async function BudgetPage() {
+  const dateConfig = await serverApi<{ maxWeddingAdvanceDays: number }>("/configuracao/datas");
   return (
     <>
       <header className="legal__bar">
@@ -17,7 +19,7 @@ export default function BudgetPage() {
           <h1 className="page-title">Peça um orçamento</h1>
           <p className="quote__intro">Conte um pouco sobre o casamento e a Anima Cantus retorna com uma proposta para a música da cerimônia de vocês.</p>
           <div className="split">
-            <PublicBudgetForm />
+            <PublicBudgetForm maxWeddingAdvanceDays={dateConfig.data?.maxWeddingAdvanceDays ?? 120} />
             <aside className="card quote__how" aria-labelledby="how-title">
               <h2 className="heading-serif heading-serif--md" id="how-title">Como funciona</h2>
               <ol className="steps">

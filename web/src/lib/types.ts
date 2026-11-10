@@ -29,15 +29,22 @@ export interface ContractView {
     documentId: string;
     address: string;
     email: string;
-    phone: string;
     weddingDate: string;
     weddingTime: string;
     venue: string;
     formation: string;
-    paymentTerms: string;
+    additionalInstrumentistType: string;
+    additionalInstrumentistOptionId: string;
   };
   discountCents: number;
-  catalog: { id: string; name: string; description: string | null; kind: "PACOTE" | "SERVICO" | "ADICIONAL"; priceCents: number }[];
+  catalog: {
+    id: string;
+    name: string;
+    description: string | null;
+    kind: "PACOTE" | "SERVICO" | "ADICIONAL";
+    priceCents: number;
+    options: { id: string; label: string; priceCents: number }[];
+  }[];
   latest: {
     id: string;
     totalCents: number;
@@ -103,6 +110,15 @@ export interface ServiceItemView {
   name: string;
   description: string | null;
   kind: "PACOTE" | "SERVICO" | "ADICIONAL";
+  priceCents: number;
+  active: boolean;
+  sortOrder: number;
+  options: ServiceOptionView[];
+}
+
+export interface ServiceOptionView {
+  id: string;
+  label: string;
   priceCents: number;
   active: boolean;
   sortOrder: number;

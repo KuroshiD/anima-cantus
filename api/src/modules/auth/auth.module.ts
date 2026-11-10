@@ -1,5 +1,6 @@
 import {
   Body,
+  BadRequestException,
   CanActivate,
   Controller,
   ExecutionContext,
@@ -24,7 +25,9 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  isIsoWithinAdvanceDays,
   resetPasswordSchema,
+  todayIso,
   verifyEmailSchema,
   anniversaryIso,
   asDate,
@@ -145,6 +148,11 @@ export class AuthService implements OnModuleInit {
   }
 
   async register(input: RegisterDto): Promise<{ message: string }> {
+    const config = await this.prisma.alertConfig.findUnique({ where: { id: "default" } });
+    const maxAdvanceDays = config?.maxWeddingAdvanceDays ?? 120;
+    if (!isIsoWithinAdvanceDays(input.weddingDate, todayIso(), maxAdvanceDays)) {
+      throw new BadRequestException(`Escolha uma data entre hoje e os próximos ${maxAdvanceDays} dias.`);
+    }
     const email = input.email.toLowerCase();
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ForbiddenException("Já existe uma conta com esse e-mail.");

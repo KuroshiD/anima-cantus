@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { anniversaryIso, asDate, daysUntil, isIsoOnOrAfter, isoDate, localIsoDate, repertoireWindow } from "./dates";
+import {
+  addDaysIso,
+  anniversaryIso,
+  asDate,
+  daysUntil,
+  isIsoOnOrAfter,
+  isIsoWithinAdvanceDays,
+  hasWeddingTimeConflict,
+  isoDate,
+  localIsoDate,
+  repertoireWindow,
+} from "./dates";
 import { budgetWhatsAppText, whatsAppLink } from "./whatsapp";
 
 describe("janela do repertório", () => {
@@ -30,6 +41,14 @@ describe("janela do repertório", () => {
     expect(localIsoDate(new Date(2026, 9, 20, 23, 30))).toBe("2026-10-20");
     expect(isIsoOnOrAfter("2026-10-20", "2026-10-20")).toBe(true);
     expect(isIsoOnOrAfter("2026-10-19", "2026-10-20")).toBe(false);
+    expect(isIsoOnOrAfter("2026-02-30", "2026-01-01")).toBe(false);
+    expect(addDaysIso("2026-10-20", 120)).toBe("2027-02-17");
+    expect(isIsoWithinAdvanceDays("2027-02-17", "2026-10-20", 120)).toBe(true);
+    expect(isIsoWithinAdvanceDays("2027-02-18", "2026-10-20", 120)).toBe(false);
+    expect(isIsoWithinAdvanceDays("2026-10-19", "2026-10-20", 120)).toBe(false);
+    expect(hasWeddingTimeConflict("16:00", ["13:00"])).toBe(false);
+    expect(hasWeddingTimeConflict("16:00", ["13:01"])).toBe(true);
+    expect(hasWeddingTimeConflict("16:00", ["19:00"])).toBe(false);
   });
 });
 

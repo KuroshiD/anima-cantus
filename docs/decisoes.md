@@ -8,6 +8,7 @@
 - A fila é BullMQ com Redis, no lugar de RabbitMQ, pela operação mais simples e pela integração com NestJS.
 - A sessão fica no Redis, e não em JWT puro, para poder ser revogada.
 - As datas da janela do repertório e do envio de 1 ano ficam em colunas da jornada. Um job diário de reconciliação enfileira o que ainda não foi enviado.
+- A antecedência máxima para a data do casamento é configurável pela administração, com padrão de 120 dias, e aplicada no cadastro, orçamento e contrato.
 - O e-mail é o canal principal de notificação. O WhatsApp automático existe só como implementação que recusa o envio, para o contrato da interface ficar explícito.
 
 ## Features a discutir em grupo

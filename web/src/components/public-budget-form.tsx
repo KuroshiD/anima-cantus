@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { budgetSchema } from "@anima/shared";
+import { addDaysIso, budgetSchema, isIsoWithinAdvanceDays, localIsoDate } from "@anima/shared";
 import { useState, type FormEvent } from "react";
 import { apiSend, readError } from "../lib/client-api";
+import { formatPhone } from "../lib/input-masks";
 
 type BudgetResult = { message: string; whatsAppUrl: string };
 
-export function PublicBudgetForm() {
+export function PublicBudgetForm({ maxWeddingAdvanceDays }: { maxWeddingAdvanceDays: number }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -35,6 +36,10 @@ export function PublicBudgetForm() {
     const parsed = budgetSchema.safeParse({ name, email, phone, weddingDate, venue, hasPlanner, source });
     if (!parsed.success) {
       setError(parsed.error.issues.map((issue) => issue.message).join(" "));
+      return;
+    }
+    if (weddingDate && !isIsoWithinAdvanceDays(weddingDate, localIsoDate(new Date()), maxWeddingAdvanceDays)) {
+      setError(`Escolha uma data entre hoje e os próximos ${maxWeddingAdvanceDays} dias.`);
       return;
     }
     setBusy(true);
@@ -93,13 +98,13 @@ export function PublicBudgetForm() {
             <div className="form-grid">
               <label className="field field--full"><span className="field__label">Nome (do casal ou de quem pede)</span><input className="input" autoComplete="name" required value={name} onChange={(event) => setName(event.target.value)} /></label>
               <label className="field"><span className="field__label">E-mail (opcional)</span><input className="input" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-              <label className="field"><span className="field__label">Telefone / WhatsApp</span><input className="input" type="tel" autoComplete="tel" inputMode="tel" required value={phone} onChange={(event) => setPhone(event.target.value)} /></label>
+              <label className="field"><span className="field__label">Telefone / WhatsApp</span><input className="input" type="tel" autoComplete="tel" inputMode="tel" required placeholder="(00) 00000-0000" value={phone} onChange={(event) => setPhone(formatPhone(event.target.value))} /></label>
             </div>
           </section>
           <section className="form-section" aria-labelledby="budget-ceremony">
             <h3 className="form-section__title" id="budget-ceremony">Cerimônia</h3>
             <div className="form-grid">
-              <label className="field"><span className="field__label">Data prevista (opcional)</span><input className="input" type="date" value={weddingDate} onChange={(event) => setWeddingDate(event.target.value)} /></label>
+              <label className="field"><span className="field__label">Data prevista (opcional)</span><input className="input" type="date" min={localIsoDate(new Date())} max={addDaysIso(localIsoDate(new Date()), maxWeddingAdvanceDays)} value={weddingDate} onChange={(event) => setWeddingDate(event.target.value)} /></label>
               <label className="field field--full"><span className="field__label">Local da cerimônia (opcional)</span><input className="input" maxLength={160} placeholder="Igreja, capela, espaço de eventos…" value={venue} onChange={(event) => setVenue(event.target.value)} /></label>
             </div>
             <label className="check quote__planner"><input type="checkbox" checked={hasPlanner} onChange={(event) => setHasPlanner(event.target.checked)} /><span>Já temos cerimonialista / assessoria</span></label>

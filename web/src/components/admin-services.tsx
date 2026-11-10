@@ -1,10 +1,11 @@
 "use client";
 
-import { serviceWriteSchema } from "@anima/shared";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { serviceOptionWriteSchema, serviceWriteSchema } from "@anima/shared";
+import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { apiSend, readError } from "../lib/client-api";
-import type { ServiceItemView } from "../lib/types";
+import type { ServiceItemView, ServiceOptionView } from "../lib/types";
+import { currencyToCents, formatCurrency } from "../lib/input-masks";
 
 type Draft = {
   name: string;
@@ -21,8 +22,80 @@ function priceLabel(cents: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
-function priceInCents(value: string): number {
-  return Math.round(Number(value) * 100);
+function ServiceOptionsEditor({ service }: { service: ServiceItemView }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState<ServiceOptionView | null>(null);
+  const [optionFormOpen, setOptionFormOpen] = useState(false);
+  const [label, setLabel] = useState("");
+  const [price, setPrice] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [active, setActive] = useState(true);
+  const [error, setError] = useState("");
+
+  function open(option?: ServiceOptionView) {
+    setError("");
+    setOptionFormOpen(true);
+    setEditing(option ?? null);
+    setLabel(option?.label ?? "");
+    setPrice(option ? formatCurrency(String(option.priceCents)) : "");
+    setSortOrder(String(option?.sortOrder ?? service.options.length));
+    setActive(option?.active ?? true);
+  }
+
+  async function save() {
+    const parsed = serviceOptionWriteSchema.safeParse({
+      label,
+      priceCents: currencyToCents(price),
+      sortOrder: Number(sortOrder),
+      active,
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Confira os dados da opção.");
+      return;
+    }
+    try {
+      const response = await apiSend(
+        `/admin/servicos/${service.id}/opcoes${editing ? `/${editing.id}` : ""}`,
+        { method: editing ? "PATCH" : "POST", body: JSON.stringify(parsed.data) },
+      );
+      if (!response.ok) {
+        setError(await readError(response));
+        return;
+      }
+      setEditing(null);
+      setOptionFormOpen(false);
+      setLabel("");
+      setPrice("");
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível salvar a opção.");
+    }
+  }
+
+  return (
+    <details className="management__options">
+      <summary>Configurar opções ({service.options.length})</summary>
+      <div className="management__options-list">
+        {service.options.map((option) => (
+          <div className="management__option" key={option.id}>
+            <span>{option.label} — {priceLabel(option.priceCents)}</span>
+            <button className="link" type="button" onClick={() => open(option)}>Editar</button>
+          </div>
+        ))}
+        <button className="btn btn--secondary btn--sm" type="button" onClick={() => open()}>Nova opção</button>
+      </div>
+      {optionFormOpen ? (
+        <div className="management__option-form">
+          <label className="field"><span className="field__label">Descrição da opção</span><input className="input" value={label} onChange={(event) => setLabel(event.target.value)} placeholder="1 violinista" /></label>
+          <label className="field"><span className="field__label">Preço (R$)</span><input className="input" inputMode="decimal" value={price} onChange={(event) => setPrice(formatCurrency(event.target.value))} placeholder="300,00" /></label>
+          <label className="field"><span className="field__label">Ordem</span><input className="input" type="number" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)} /></label>
+          <label className="check"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /><span>Disponível</span></label>
+          {error ? <p className="field__error" role="alert">{error}</p> : null}
+          <button className="btn btn--primary btn--sm" type="button" onClick={() => void save()}>Salvar opção</button>
+        </div>
+      ) : null}
+    </details>
+  );
 }
 
 export function AdminServices({ services }: { services: ServiceItemView[] }) {
@@ -52,7 +125,7 @@ export function AdminServices({ services }: { services: ServiceItemView[] }) {
       name: service.name,
       description: service.description ?? "",
       kind: service.kind,
-      price: (service.priceCents / 100).toFixed(2),
+      price: formatCurrency(String(service.priceCents)),
       active: service.active,
       sortOrder: String(service.sortOrder),
     });
@@ -73,7 +146,7 @@ export function AdminServices({ services }: { services: ServiceItemView[] }) {
       name: draft.name,
       description: draft.description,
       kind: draft.kind,
-      priceCents: priceInCents(draft.price),
+      priceCents: currencyToCents(draft.price),
       active: draft.active,
       sortOrder: Number(draft.sortOrder),
     };
@@ -142,7 +215,8 @@ export function AdminServices({ services }: { services: ServiceItemView[] }) {
           <thead><tr><th>Serviço</th><th>Tipo</th><th>Preço</th><th>Status</th><th>Ações</th></tr></thead>
           <tbody>
             {services.map((service) => (
-              <tr key={service.id}>
+              <Fragment key={service.id}>
+              <tr>
                 <td><strong>{service.name}</strong><span>{service.description || "—"}</span></td>
                 <td>{service.kind === "PACOTE" ? "Pacote base" : service.kind === "ADICIONAL" ? "Adicional" : "Serviço"}</td>
                 <td>{priceLabel(service.priceCents)}</td>
@@ -152,6 +226,12 @@ export function AdminServices({ services }: { services: ServiceItemView[] }) {
                   <button className="link" type="button" onClick={() => void toggleActive(service)}>{service.active ? "Desativar" : "Ativar"}</button>
                 </td>
               </tr>
+              {service.name === "Instrumentista adicional" ? (
+                <tr>
+                  <td colSpan={5}><ServiceOptionsEditor service={service} /></td>
+                </tr>
+              ) : null}
+              </Fragment>
             ))}
             {services.length === 0 ? <tr><td colSpan={5} className="text-muted">Nenhum serviço cadastrado.</td></tr> : null}
           </tbody>
@@ -171,7 +251,7 @@ export function AdminServices({ services }: { services: ServiceItemView[] }) {
               <option value="PACOTE">Pacote base</option><option value="SERVICO">Serviço</option><option value="ADICIONAL">Adicional</option>
             </select>
           </label>
-          <label className="field"><span className="field__label">Preço (R$)</span><input className="input" type="number" min="0" step="0.01" required value={draft.price} onChange={(event) => setDraft({ ...draft, price: event.target.value })} /></label>
+          <label className="field"><span className="field__label">Preço (R$)</span><input className="input" type="text" inputMode="decimal" required value={draft.price} onChange={(event) => setDraft({ ...draft, price: formatCurrency(event.target.value) })} /></label>
           <label className="field"><span className="field__label">Ordem de exibição</span><input className="input" type="number" step="1" required value={draft.sortOrder} onChange={(event) => setDraft({ ...draft, sortOrder: event.target.value })} /></label>
           <label className="check"><input type="checkbox" checked={draft.active} onChange={(event) => setDraft({ ...draft, active: event.target.checked })} /><span>Disponível para contratação</span></label>
           {error ? <p className="field__error" role="alert">{error}</p> : null}

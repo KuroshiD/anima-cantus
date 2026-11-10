@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { loginSchema, registerSchema } from "./schemas";
+import { contractDraftSchema, isValidCpf, loginSchema, registerSchema } from "./schemas";
 
 describe("auth schemas", () => {
   it("defaults to a browser-session cookie unless the user asks to stay connected", () => {
@@ -18,5 +18,11 @@ describe("auth schemas", () => {
     };
     expect(registerSchema.safeParse(registration).success).toBe(false);
     expect(registerSchema.safeParse({ ...registration, termsVersion: "2026-10-19" }).success).toBe(true);
+  });
+
+  it("valida apenas CPFs com dígitos verificadores corretos", () => {
+    expect(isValidCpf("529.982.247-25")).toBe(true);
+    expect(isValidCpf("123.456.789-00")).toBe(false);
+    expect(contractDraftSchema.shape.documentId.safeParse("12.345.678/0001-99").success).toBe(false);
   });
 });

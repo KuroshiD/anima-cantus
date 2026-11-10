@@ -26,8 +26,11 @@ import {
   contractDraftSchema,
   formatBRL,
   formatDateBR,
+  hasWeddingTimeConflict,
   isoDate,
+  isIsoWithinAdvanceDays,
   sumPrices,
+  todayIso,
   uploadConfirmSchema,
   uploadIntentSchema,
   valorPorExtenso,
@@ -65,7 +68,11 @@ class ContractsController {
   @Get("me/previa")
   async preview(@Req() req: AuthRequest) {
     const contract = await this.load(requireCoupleId(req));
-    const priced = await this.price(contract.items.map((item) => item.serviceId), contract.discountCents);
+    const priced = await this.price(
+      contract.items.map((item) => item.serviceId),
+      contract.discountCents,
+      contract.couple.additionalInstrumentistOptionId,
+    );
     return priced;
   }
 
@@ -76,7 +83,34 @@ class ContractsController {
     if (contract.status !== "EM_ANDAMENTO") {
       throw new ConflictException("O contrato não pode ser alterado neste status.");
     }
-    await this.ensureServices(body.serviceIds);
+    const config = await this.prisma.alertConfig.findUnique({ where: { id: "default" } });
+    const maxAdvanceDays = config?.maxWeddingAdvanceDays ?? 120;
+    if (!isIsoWithinAdvanceDays(body.weddingDate, todayIso(), maxAdvanceDays)) {
+      throw new BadRequestException(`Escolha uma data entre hoje e os próximos ${maxAdvanceDays} dias.`);
+    }
+    const scheduledCouples = await this.prisma.couple.findMany({
+      where: { weddingDate: asDate(body.weddingDate), id: { not: id }, weddingTime: { not: null } },
+      select: { weddingTime: true },
+    });
+    if (hasWeddingTimeConflict(body.weddingTime, scheduledCouples.map((couple) => couple.weddingTime).filter((time): time is string => Boolean(time)))) {
+      throw new ConflictException("Já existe uma cerimônia nesse dia com menos de 3 horas de intervalo.");
+    }
+    const services = await this.ensureServices(body.serviceIds);
+    const additionalService = services.find((service) => service.name === "Instrumentista adicional");
+    const additionalOption = additionalService && body.additionalInstrumentistOptionId
+      ? await this.prisma.serviceOption.findFirst({
+          where: { id: body.additionalInstrumentistOptionId, serviceId: additionalService.id, active: true },
+        })
+      : null;
+    if (additionalService && !additionalOption) {
+      throw new BadRequestException("Selecione uma opção de instrumentista adicional.");
+    }
+    if (
+      additionalService &&
+      !additionalOption?.label.trim()
+    ) {
+      throw new BadRequestException("Informe o tipo de instrumentista adicional.");
+    }
     const window = repertoireWindow(body.weddingDate);
     await this.prisma.$transaction(async (tx) => {
       await tx.couple.update({
@@ -86,12 +120,12 @@ class ContractsController {
           documentId: body.documentId,
           address: body.address,
           email: body.email,
-          phone: body.phone,
           weddingDate: asDate(body.weddingDate),
           weddingTime: body.weddingTime,
           venue: body.venue,
           formation: body.formation || null,
-          paymentTerms: body.paymentTerms,
+          additionalInstrumentistType: additionalOption?.label ?? null,
+          additionalInstrumentistOptionId: additionalOption?.id ?? null,
         },
       });
       await tx.journey.update({
@@ -116,18 +150,22 @@ class ContractsController {
     const contract = await this.load(id);
     if (contract.status !== "EM_ANDAMENTO") throw new ConflictException("O contrato não pode ser gerado neste status.");
     const couple = contract.couple;
-    if (!couple.legalName || !couple.documentId || !couple.address || !couple.email || !couple.phone || !couple.venue || !couple.paymentTerms || !couple.weddingTime) {
+    if (!couple.legalName || !couple.documentId || !couple.address || !couple.email || !couple.venue || !couple.weddingTime) {
       throw new BadRequestException("Preencha os dados do contrato antes de gerar o PDF.");
     }
     if (!contract.items.length) throw new BadRequestException("Selecione ao menos um serviço.");
-    const priced = await this.price(contract.items.map((item) => item.serviceId), contract.discountCents);
+    const priced = await this.price(
+      contract.items.map((item) => item.serviceId),
+      contract.discountCents,
+      couple.additionalInstrumentistOptionId,
+    );
     const snapshot = await this.prisma.contractSnapshot.create({
       data: {
         contractId: contract.id,
         totalCents: priced.totalCents,
         discountCents: contract.discountCents,
         totalInWords: priced.totalInWords,
-        paymentTerms: couple.paymentTerms,
+        paymentTerms: "",
         itemsJson: priced.items as unknown as Prisma.InputJsonValue,
         legalName: couple.legalName,
         documentId: couple.documentId,
@@ -135,9 +173,10 @@ class ContractsController {
         weddingTime: couple.weddingTime,
         venue: couple.venue,
         formation: couple.formation,
+        additionalInstrumentistType: couple.additionalInstrumentistType,
         address: couple.address,
         email: couple.email,
-        phone: couple.phone,
+        phone: "",
       },
     });
     await this.contractsQueue.add("generate", { contractId: contract.id, snapshotId: snapshot.id }, { jobId: `pdf-${snapshot.id}` });
@@ -198,19 +237,26 @@ class ContractsController {
   private async ensureServices(ids: string[]) {
     const found = await this.prisma.serviceItem.findMany({ where: { id: { in: ids }, active: true } });
     if (found.length !== new Set(ids).size) throw new BadRequestException("Há um serviço indisponível na seleção.");
+    return found;
   }
 
-  private async price(serviceIds: string[], discountCents: number) {
-    const services = await this.prisma.serviceItem.findMany({ where: { id: { in: serviceIds }, active: true } });
+  private async price(serviceIds: string[], discountCents: number, additionalOptionId?: string | null) {
+    const services = await this.prisma.serviceItem.findMany({
+      where: { id: { in: serviceIds }, active: true },
+      include: { options: { where: { active: true } } },
+    });
     if (services.length !== serviceIds.length) throw new BadRequestException("Há um serviço indisponível na seleção.");
+    const additionalService = services.find((service) => service.name === "Instrumentista adicional");
+    const additionalOption = additionalService?.options.find((option) => option.id === additionalOptionId);
+    if (additionalService && !additionalOption) throw new BadRequestException("Selecione uma opção de instrumentista adicional.");
     const items = services
       .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, "pt-BR"))
       .map((service) => ({
         serviceId: service.id,
         name: service.name,
         kind: service.kind,
-        priceCents: service.priceCents,
-        priceLabel: formatBRL(service.priceCents),
+        priceCents: service === additionalService && additionalOption ? additionalOption.priceCents : service.priceCents,
+        priceLabel: formatBRL(service === additionalService && additionalOption ? additionalOption.priceCents : service.priceCents),
       }));
     const totalCents = sumPrices(items.map((item) => item.priceCents), discountCents);
     return { items, discountCents, totalCents, totalLabel: formatBRL(totalCents), totalInWords: valorPorExtenso(totalCents) };
@@ -218,7 +264,11 @@ class ContractsController {
 
   private async present(id: string) {
     const contract = await this.load(id);
-    const catalog = await this.prisma.serviceItem.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
+    const catalog = await this.prisma.serviceItem.findMany({
+      where: { active: true },
+      include: { options: { where: { active: true }, orderBy: [{ sortOrder: "asc" }, { label: "asc" }] } },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
     const latest = contract.snapshots[0] ?? null;
     return {
       id: contract.id,
@@ -231,12 +281,12 @@ class ContractsController {
         documentId: contract.couple.documentId ?? "",
         address: contract.couple.address ?? "",
         email: contract.couple.email ?? "",
-        phone: contract.couple.phone ?? "",
         weddingDate: isoDate(contract.couple.weddingDate),
         weddingTime: contract.couple.weddingTime ?? "",
         venue: contract.couple.venue ?? "",
         formation: contract.couple.formation ?? "",
-        paymentTerms: contract.couple.paymentTerms ?? "",
+        additionalInstrumentistType: contract.couple.additionalInstrumentistType ?? "",
+        additionalInstrumentistOptionId: contract.couple.additionalInstrumentistOptionId ?? "",
         partnerOne: contract.couple.partnerOne,
         partnerTwo: contract.couple.partnerTwo,
       },
@@ -247,7 +297,6 @@ class ContractsController {
             totalCents: latest.totalCents,
             totalInWords: latest.totalInWords,
             totalLabel: formatBRL(latest.totalCents),
-            paymentTerms: latest.paymentTerms,
             items: latest.itemsJson,
             createdAt: latest.createdAt,
           }

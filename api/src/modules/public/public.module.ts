@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Module, Post, ServiceUnavailableException } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Module, Post, ServiceUnavailableException } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import { createZodDto } from "nestjs-zod";
-import { asDate, budgetSchema, budgetWhatsAppText, whatsAppLink } from "@anima/shared";
+import { asDate, budgetSchema, budgetWhatsAppText, isIsoWithinAdvanceDays, todayIso, whatsAppLink } from "@anima/shared";
 import { PrismaService } from "../../prisma.service";
 import { RedisService } from "../../redis.service";
 import { NotificationsService } from "../../notifications.service";
@@ -16,6 +16,12 @@ class PublicController {
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
   ) {}
+
+  @Get("configuracao/datas")
+  async dateConfig() {
+    const config = await this.prisma.alertConfig.findUnique({ where: { id: "default" } });
+    return { maxWeddingAdvanceDays: config?.maxWeddingAdvanceDays ?? 120 };
+  }
 
   @Get("conteudo")
   async content() {
@@ -42,6 +48,13 @@ class PublicController {
   @Throttle({ default: { limit: 8, ttl: 60_000 } })
   @Post("orcamentos")
   async budget(@Body() body: BudgetDto) {
+    if (body.weddingDate) {
+      const config = await this.prisma.alertConfig.findUnique({ where: { id: "default" } });
+      const maxAdvanceDays = config?.maxWeddingAdvanceDays ?? 120;
+      if (!isIsoWithinAdvanceDays(body.weddingDate, todayIso(), maxAdvanceDays)) {
+        throw new BadRequestException(`Escolha uma data entre hoje e os próximos ${maxAdvanceDays} dias.`);
+      }
+    }
     const created = await this.prisma.budgetRequest.create({
       data: {
         name: body.name,

@@ -3,7 +3,8 @@
 import {
   contractDraftSchema,
   formatBRL,
-  isIsoOnOrAfter,
+  addDaysIso,
+  isIsoWithinAdvanceDays,
   localIsoDate,
   valorPorExtenso,
   type ContractDraftInput,
@@ -13,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from "./icons";
 import { apiSend, readError } from "../lib/client-api";
 import type { ContractView } from "../lib/types";
+import { formatCpf, formatPhone } from "../lib/input-masks";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const tabs = [
@@ -33,11 +35,9 @@ function initialStep(contract: ContractView, serviceIds: string[]): ContractStep
     couple.documentId &&
     couple.address &&
     couple.email &&
-    couple.phone &&
     couple.weddingDate &&
     couple.weddingTime &&
-    couple.venue &&
-    couple.paymentTerms,
+    couple.venue,
   );
   if (!hasRequiredData) return "dados";
   if (serviceIds.length) return "conferencia";
@@ -45,31 +45,8 @@ function initialStep(contract: ContractView, serviceIds: string[]): ContractStep
   return "dados";
 }
 
-function formatCpf(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 14);
-  if (digits.length <= 11) {
-    return digits
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-  }
-  return digits
-    .replace(/^(\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1/$2")
-    .replace(/(\d{4})(\d)/, "$1-$2");
-}
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (digits.length <= 2) return digits ? `(${digits}` : "";
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
-
-function isTodayOrLater(value: string, now = new Date()): boolean {
-  return isIsoOnOrAfter(value, localIsoDate(now));
+function isWeddingDateWithinLimit(value: string, maxAdvanceDays: number, now = new Date()): boolean {
+  return isIsoWithinAdvanceDays(value, localIsoDate(now), maxAdvanceDays);
 }
 
 function formatDate(value: string): string {
@@ -78,7 +55,13 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" }).format(date);
 }
 
-export function ContractWizard({ initial }: { initial: ContractView }) {
+export function ContractWizard({
+  initial,
+  maxWeddingAdvanceDays,
+}: {
+  initial: ContractView;
+  maxWeddingAdvanceDays: number;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -94,12 +77,12 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
     documentId: initial.couple.documentId,
     address: initial.couple.address,
     email: initial.couple.email,
-    phone: initial.couple.phone,
     weddingDate: initial.couple.weddingDate,
     weddingTime: initial.couple.weddingTime,
     venue: initial.couple.venue,
     formation: initial.couple.formation,
-    paymentTerms: initial.couple.paymentTerms,
+    additionalInstrumentistType: initial.couple.additionalInstrumentistType,
+    additionalInstrumentistOptionId: initial.couple.additionalInstrumentistOptionId,
   });
   const [serviceIds, setServiceIds] = useState<string[]>(startingServices);
   const [errors, setErrors] = useState<DraftErrors>({});
@@ -120,13 +103,23 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
   );
   const totalCents = Math.max(
     0,
-    selectedServices.reduce((total, item) => total + item.priceCents, 0) - contract.discountCents,
+    selectedServices.reduce((total, item) => {
+      const option = item.name === "Instrumentista adicional"
+        ? item.options.find((candidate) => candidate.id === draft.additionalInstrumentistOptionId)
+        : null;
+      return total + (option?.priceCents ?? item.priceCents);
+    }, 0) - contract.discountCents,
   );
   const total = formatBRL(totalCents);
   const totalInWords = valorPorExtenso(totalCents);
+  const today = localIsoDate(new Date());
+  const additionalInstrumentist = selectedServices.find((item) => item.name === "Instrumentista adicional");
+  const hasAdditionalInstrumentistOption = !additionalInstrumentist ||
+    additionalInstrumentist.options.some((option) => option.id === draft.additionalInstrumentistOptionId);
   const canReview = serviceIds.length > 0 &&
     contractDraftSchema.safeParse({ ...draft, serviceIds }).success &&
-    isTodayOrLater(draft.weddingDate);
+    hasAdditionalInstrumentistOption &&
+    isWeddingDateWithinLimit(draft.weddingDate, maxWeddingAdvanceDays);
   const canSign = Boolean(contract.latest || generatedFile || showGenerationNotice);
 
   useEffect(() => () => {
@@ -140,7 +133,7 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
   useEffect(() => {
     if (locked || step !== "dados" || !serviceIds.length) return;
     const parsed = contractDraftSchema.safeParse({ ...draft, serviceIds });
-    if (!parsed.success || !isTodayOrLater(parsed.data.weddingDate)) return;
+    if (!parsed.success || !isWeddingDateWithinLimit(parsed.data.weddingDate, maxWeddingAdvanceDays)) return;
 
     setAutoSaveMessage("Alterações pendentes");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
@@ -150,7 +143,7 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
     return () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     };
-  }, [draft, locked, serviceIds, step]);
+  }, [draft, locked, maxWeddingAdvanceDays, serviceIds, step]);
 
   function updateField<K extends keyof DraftFields>(key: K, value: DraftFields[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -176,9 +169,15 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
       return null;
     }
 
-    if (!isTodayOrLater(parsed.data.weddingDate)) {
-      setErrors({ weddingDate: "Escolha uma data a partir de hoje." });
+    if (!isWeddingDateWithinLimit(parsed.data.weddingDate, maxWeddingAdvanceDays)) {
+      setErrors({ weddingDate: `Escolha uma data entre hoje e os próximos ${maxWeddingAdvanceDays} dias.` });
       setStep("dados");
+      return null;
+    }
+
+    if (additionalInstrumentist && !hasAdditionalInstrumentistOption) {
+      setErrors({ additionalInstrumentistOptionId: "Selecione uma opção de instrumentista adicional." });
+      setStep("servicos");
       return null;
     }
 
@@ -378,8 +377,10 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
           disabled={locked}
           aria-invalid={message ? true : undefined}
           aria-describedby={message ? `${id}-error` : undefined}
-          autoComplete={key === "email" ? "email" : key === "phone" ? "tel" : undefined}
+          autoComplete={key === "email" ? "email" : undefined}
           inputMode={options.mask ? "numeric" : undefined}
+          min={key === "weddingDate" ? today : undefined}
+          max={key === "weddingDate" ? addDaysIso(today, maxWeddingAdvanceDays) : undefined}
           onChange={(event) => {
             const raw = event.target.value;
             const next = options.mask === "cpf"
@@ -404,7 +405,11 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
           {selectedServices.map((item) => (
             <div className="summary__row" key={item.id}>
               <dt>{item.name}</dt>
-              <dd>{formatBRL(item.priceCents)}</dd>
+              <dd>{formatBRL(
+                item.name === "Instrumentista adicional"
+                  ? item.options.find((option) => option.id === draft.additionalInstrumentistOptionId)?.priceCents ?? item.priceCents
+                  : item.priceCents,
+              )}</dd>
             </div>
           ))}
         </dl>
@@ -426,7 +431,7 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
       <nav className="tabs" aria-label="Etapas do contrato">
         {tabs.map((item) => {
           const complete = item.id === "dados"
-            ? Boolean(draft.legalName && draft.documentId && draft.address && draft.email && draft.phone && draft.weddingDate && draft.weddingTime && draft.venue && draft.paymentTerms)
+            ? Boolean(draft.legalName && draft.documentId && draft.address && draft.email && draft.weddingDate && draft.weddingTime && draft.venue)
             : item.id === "servicos"
               ? serviceIds.length > 0
               : item.id === "conferencia"
@@ -490,14 +495,13 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
               </p>
               <div className="form-grid">
                 {field("legalName", "Nome completo do(a) contratante", { placeholder: "Nome e sobrenome" })}
-                {field("documentId", "CPF / CNPJ do(a) contratante", { placeholder: "000.000.000-00", mask: "cpf" })}
+                {field("documentId", "CPF do(a) contratante", { placeholder: "000.000.000-00", mask: "cpf" })}
               </div>
             </section>
 
             <section className="form-section" aria-labelledby="contract-contact">
               <h3 className="form-section__title" id="contract-contact">Contato</h3>
               <div className="form-grid">
-                {field("phone", "Telefone / WhatsApp", { placeholder: "(00) 00000-0000", mask: "phone" })}
                 {field("email", "E-mail", { type: "email", placeholder: "voce@email.com" })}
               </div>
             </section>
@@ -517,16 +521,6 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
                   full: true,
                   placeholder: "Formação combinada com a equipe",
                   hint: "Opcional.",
-                })}
-              </div>
-            </section>
-
-            <section className="form-section" aria-labelledby="contract-payment">
-              <h3 className="form-section__title" id="contract-payment">Pagamento</h3>
-              <div className="form-grid">
-                {field("paymentTerms", "Condição de pagamento", {
-                  full: true,
-                  placeholder: "Ex.: 50% na contratação e 50% até a data do evento",
                 })}
               </div>
             </section>
@@ -563,29 +557,64 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
               {contract.catalog.map((service) => {
                 const isPackage = service.kind === "PACOTE";
                 const checked = serviceIds.includes(service.id);
+                const isAdditionalInstrumentist = service.name === "Instrumentista adicional";
+                const selectedOption = isAdditionalInstrumentist
+                  ? service.options.find((option) => option.id === draft.additionalInstrumentistOptionId)
+                  : undefined;
                 return (
-                  <label className="option" key={service.id}>
-                    <input
-                      type="checkbox"
-                      name="serviceIds"
-                      value={service.id}
-                      checked={checked}
-                      disabled={locked || (isPackage && Boolean(packageService))}
-                      onChange={(event) => {
-                        setServiceIds((current) => event.target.checked
-                          ? [...current, service.id]
-                          : current.filter((id) => id !== service.id));
-                      }}
-                    />
-                    <span>
-                      <span className="option__name">{service.name}</span>
-                      {service.description ? <><br /><span className="option__desc">{service.description}</span></> : null}
-                    </span>
-                    <span className="option__side">
-                      <span className="option__price">{formatBRL(service.priceCents)}</span>
-                      {isPackage && packageService ? <span className="pill pill--done">Incluído</span> : null}
-                    </span>
-                  </label>
+                  <div key={service.id}>
+                    <label className="option">
+                      <input
+                        type="checkbox"
+                        name="serviceIds"
+                        value={service.id}
+                        checked={checked}
+                        disabled={locked || (isPackage && Boolean(packageService))}
+                        onChange={(event) => {
+                          setServiceIds((current) => event.target.checked
+                            ? [...current, service.id]
+                            : current.filter((id) => id !== service.id));
+                          if (!event.target.checked && isAdditionalInstrumentist) {
+                            updateField("additionalInstrumentistType", "");
+                            updateField("additionalInstrumentistOptionId", "");
+                          }
+                        }}
+                      />
+                      <span>
+                        <span className="option__name">{service.name}</span>
+                        {service.description ? <><br /><span className="option__desc">{service.description}</span></> : null}
+                      </span>
+                      <span className="option__side">
+                        <span className="option__price">{formatBRL(selectedOption?.priceCents ?? service.priceCents)}</span>
+                        {isPackage && packageService ? <span className="pill pill--done">Incluído</span> : null}
+                      </span>
+                    </label>
+                    {checked && isAdditionalInstrumentist ? (
+                      <div className="field field--full">
+                        <label className="field__label" htmlFor="additional-instrumentist-option">Opção de instrumentista adicional</label>
+                        <select
+                          className="input"
+                          id="additional-instrumentist-option"
+                          value={draft.additionalInstrumentistOptionId}
+                          disabled={locked}
+                          onChange={(event) => {
+                            const option = service.options.find((candidate) => candidate.id === event.target.value);
+                            updateField("additionalInstrumentistOptionId", event.target.value);
+                            updateField("additionalInstrumentistType", option?.label ?? "");
+                          }}
+                        >
+                          <option value="">Selecione uma opção</option>
+                          {service.options.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.label} - {formatBRL(option.priceCents)}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.additionalInstrumentistOptionId ? <p className="field__error" role="alert">{errors.additionalInstrumentistOptionId}</p> : null}
+                        {service.options.length === 0 ? <p className="field__error">Nenhuma opção está disponível no momento.</p> : null}
+                      </div>
+                    ) : null}
+                  </div>
                 );
               })}
               {contract.catalog.length === 0 ? (
@@ -642,7 +671,7 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
                       <div><dt>Noivo(a) 1</dt><dd>{contract.couple.partnerOne}</dd></div>
                       <div><dt>Noivo(a) 2</dt><dd>{contract.couple.partnerTwo}</dd></div>
                       <div><dt>Contratante</dt><dd>{draft.legalName}</dd></div>
-                      <div><dt>CPF / CNPJ</dt><dd>{draft.documentId}</dd></div>
+                      <div><dt>CPF</dt><dd>{draft.documentId}</dd></div>
                     </dl>
                   </section>
                   <section className="review__section">
@@ -653,7 +682,6 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
                       </button>
                     </div>
                     <dl>
-                      <div><dt>Telefone / WhatsApp</dt><dd>{draft.phone}</dd></div>
                       <div><dt>E-mail</dt><dd>{draft.email}</dd></div>
                     </dl>
                   </section>
@@ -670,7 +698,7 @@ export function ContractWizard({ initial }: { initial: ContractView }) {
                       <div className="wide"><dt>Local</dt><dd>{draft.venue}</dd></div>
                       <div className="wide"><dt>Endereço</dt><dd>{draft.address}</dd></div>
                       {draft.formation ? <div className="wide"><dt>Formação</dt><dd>{draft.formation}</dd></div> : null}
-                      <div className="wide"><dt>Condição de pagamento</dt><dd>{draft.paymentTerms}</dd></div>
+                      {draft.additionalInstrumentistType ? <div className="wide"><dt>Instrumentista adicional</dt><dd>{draft.additionalInstrumentistType}</dd></div> : null}
                     </dl>
                   </section>
                   <section className="review__section">

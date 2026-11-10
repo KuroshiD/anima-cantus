@@ -91,9 +91,10 @@
     /* Coluna lateral */
     .aside { display: grid; gap: 1rem; }
 
-    .inspiration .icon { font-size: 1.25rem; }
     .inspiration .eyebrow { margin-top: 1rem; }
+    .inspiration .eyebrow:first-child { margin-top: 0; }
     .inspiration__title { margin: 0.25rem 0 1rem; font-size: 1.625rem; }
+    .inspiration > p:not(.eyebrow) { margin-top: 0.75rem; font-size: 0.8125rem; }
 
     .overall__head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.75rem; }
     .overall__title { font-size: 0.875rem; font-weight: 500; }
@@ -102,16 +103,20 @@
 
     /* DiÃ¡logo de escolha */
     .picker {
-      width: min(92vw, 26.25rem);
-      padding: 1.5rem;
+      width: min(92vw, 53.75rem);
+      max-height: calc(100dvh - 2rem);
+      padding: 0;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--surface);
       color: var(--ink);
+      overflow: auto;
     }
 
     .picker::backdrop { background: rgb(30 30 28 / 0.35); }
-    .picker__title { font-size: 1.625rem; }
+    .picker form { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; }
+    .picker__form { padding: 1.75rem; }
+    .picker__title { font-size: 1.75rem; }
     .picker__label { display: block; margin: 1rem 0 0.375rem; font-size: 0.8125rem; font-weight: 500; }
 
     .picker input {
@@ -123,10 +128,26 @@
       background: var(--surface);
     }
 
+    .picker__suggestions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.625rem; }
+    .picker__suggestions .btn { white-space: normal; text-align: left; }
+    .picker__hint { margin-top: 0.875rem; color: var(--muted); font-size: 0.75rem; }
     .picker__actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.25rem; }
+    .picker__guidance { padding: 1.75rem 1.5rem; background: var(--green); color: var(--green-ink); }
+    .picker__guidance .eyebrow { color: rgb(255 255 255 / 0.7); }
+    .picker__guidance-title { margin: 0.25rem 0 0.75rem; font-size: 1.5rem; }
+    .picker__tips { padding-left: 1.125rem; list-style: disc; }
+    .picker__tips li { margin-top: 0.625rem; font-size: 0.8125rem; }
+    .picker__secret { margin-top: 1.25rem; padding-top: 0.875rem; border-top: 1px solid rgb(255 255 255 / 0.3); font-size: 0.8125rem; }
+    .picker__secret strong { display: block; margin-bottom: 0.25rem; }
+
+    @media (max-width: 760px) {
+      .picker form { grid-template-columns: 1fr; }
+      .picker__guidance { order: -1; padding: 1.25rem 1.5rem; }
+    }
 
     @media (max-width: 600px) {
       .search { width: 100%; }
       .deadline { align-items: flex-start; flex-wrap: wrap; }
       .deadline__count { width: 100%; padding-left: 2rem; }
+      .picker__form { padding: 1.5rem; }
     }

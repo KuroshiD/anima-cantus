@@ -5,20 +5,31 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { apiSend, readError } from "../lib/client-api";
 
-export function AdminAlertSettings({ reminderLeadDays }: { reminderLeadDays: number }) {
+export function AdminAlertSettings({
+  reminderLeadDays,
+  maxWeddingAdvanceDays,
+}: {
+  reminderLeadDays: number;
+  maxWeddingAdvanceDays: number;
+}) {
   const router = useRouter();
-  const [savedValue, setSavedValue] = useState(reminderLeadDays);
-  const [value, setValue] = useState(String(reminderLeadDays));
+  const [savedReminderLeadDays, setSavedReminderLeadDays] = useState(reminderLeadDays);
+  const [reminderValue, setReminderValue] = useState(String(reminderLeadDays));
+  const [savedMaxAdvanceDays, setSavedMaxAdvanceDays] = useState(maxWeddingAdvanceDays);
+  const [maxAdvanceValue, setMaxAdvanceValue] = useState(String(maxWeddingAdvanceDays));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const dirty = value !== String(savedValue);
+  const dirty = reminderValue !== String(savedReminderLeadDays) || maxAdvanceValue !== String(savedMaxAdvanceDays);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const parsed = alertConfigSchema.safeParse({ reminderLeadDays: Number(value) });
+    const parsed = alertConfigSchema.safeParse({
+      reminderLeadDays: Number(reminderValue),
+      maxWeddingAdvanceDays: Number(maxAdvanceValue),
+    });
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? "Informe um prazo entre 0 e 60 dias.");
+      setError(parsed.error.issues[0]?.message ?? "Confira os prazos informados.");
       return;
     }
     setBusy(true);
@@ -31,8 +42,10 @@ export function AdminAlertSettings({ reminderLeadDays }: { reminderLeadDays: num
         setError(await readError(response));
         return;
       }
-      setSavedValue(parsed.data.reminderLeadDays);
-      setValue(String(parsed.data.reminderLeadDays));
+      setSavedReminderLeadDays(parsed.data.reminderLeadDays);
+      setReminderValue(String(parsed.data.reminderLeadDays));
+      setSavedMaxAdvanceDays(parsed.data.maxWeddingAdvanceDays);
+      setMaxAdvanceValue(String(parsed.data.maxWeddingAdvanceDays));
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível salvar a configuração.");
@@ -52,13 +65,22 @@ export function AdminAlertSettings({ reminderLeadDays }: { reminderLeadDays: num
         </div>
         <label className="field management__alert-field">
           <span className="field__label">Avisar a partir de quantos dias antes do fim da janela</span>
-          <input className="input" type="number" min={0} max={60} step={1} required value={value} onChange={(event) => setValue(event.target.value)} />
+          <input className="input" type="number" min={0} max={60} step={1} required value={reminderValue} onChange={(event) => setReminderValue(event.target.value)} />
           <span className="field__hint">De 0 a 60 dias. O mesmo valor é usado nos alertas do casal, lembretes por e-mail e sinalização do painel.</span>
+        </label>
+        <label className="field management__alert-field">
+          <span className="field__label">Antecedência máxima para a data do casamento</span>
+          <input className="input" type="number" min={1} max={3650} step={1} required value={maxAdvanceValue} onChange={(event) => setMaxAdvanceValue(event.target.value)} />
+          <span className="field__hint">De 1 a 3650 dias. Impede cadastro, orçamento e alteração de contrato para datas mais distantes.</span>
         </label>
         {error ? <p className="field__error" role="alert">{error}</p> : null}
         <div className="savebar">
           <span className={`savebar__status ${dirty ? "is-dirty" : ""}`} role="status">{dirty ? "Alterações não salvas" : "Sem alterações"}</span>
-          <button className="btn btn--secondary" type="button" disabled={!dirty || busy} onClick={() => { setValue(String(savedValue)); setError(""); }}>Descartar alterações</button>
+          <button className="btn btn--secondary" type="button" disabled={!dirty || busy} onClick={() => {
+            setReminderValue(String(savedReminderLeadDays));
+            setMaxAdvanceValue(String(savedMaxAdvanceDays));
+            setError("");
+          }}>Descartar alterações</button>
           <button className="btn btn--primary" type="submit" disabled={!dirty || busy}>{busy ? "Salvando..." : "Salvar configuração"}</button>
         </div>
       </form>

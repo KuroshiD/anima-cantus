@@ -69,5 +69,18 @@ export function localIsoDate(now: Date): string {
 }
 
 export function isIsoOnOrAfter(value: string, today: string): boolean {
-  return value >= today;
+  return isIsoDate(value) && value >= today;
+}
+
+export function isIsoWithinAdvanceDays(value: string, today: string, maxAdvanceDays: number): boolean {
+  return isIsoOnOrAfter(value, today) && value <= addDaysIso(today, maxAdvanceDays);
+}
+
+export function hasWeddingTimeConflict(weddingTime: string, existingTimes: string[], minimumGapMinutes = 180): boolean {
+  const toMinutes = (value: string) => {
+    const [hours, minutes] = value.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+  const selectedMinutes = toMinutes(weddingTime);
+  return existingTimes.some((time) => Math.abs(selectedMinutes - toMinutes(time)) < minimumGapMinutes);
 }

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nosso repertório · Anima Cantus</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f8f5f0;--surface:#fffdfa;--line:#e8e1d6;--text:#1f1d1a;--muted:#7a7468;--sand:#efe4d3;--green:#2f5039;--green-soft:#dcebdd;--on-green:#f6efe3;--alert-bg:#fbe9dc;--alert-line:#f1d3bb;--alert-text:#b2561f;--overlay:rgba(40,36,30,.5);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161512;--surface:#1f1d19;--line:#35322b;--text:#f1ece3;--muted:#a39c8e;--sand:#3a3326;--green:#2f5039;--green-soft:#2a3b2e;--on-green:#f6efe3;--alert-bg:#3a2a1d;--alert-line:#5a4028;--alert-text:#f0a26e;--overlay:rgba(0,0,0,.65);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161512;--surface:#1f1d19;--line:#35322b;--text:#f1ece3;--muted:#a39c8e;--sand:#3a3326;--green:#2f5039;--green-soft:#2a3b2e;--on-green:#f6efe3;--alert-bg:#3a2a1d;--alert-line:#5a4028;--alert-text:#f0a26e;--overlay:rgba(0,0,0,.65);color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,sans-serif}
+.serif{font-family:"Cormorant Garamond",Georgia,serif}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+aside{border-right:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;padding:20px 12px}
+.logo{font:500 32px/.95 "Cormorant Garamond",Georgia,serif;letter-spacing:.08em;padding:4px 10px 24px;border-bottom:1px solid var(--line);margin:0 -12px 16px;padding-left:22px}
+nav a{display:block;padding:9px 12px;border-radius:6px;color:var(--text);text-decoration:none;margin-bottom:4px}
+nav a.on{background:var(--sand)}
+.user{margin-top:auto;font-size:12px;color:var(--muted)}
+.user b{display:block;color:var(--text);font-weight:500;font-size:13px;margin:2px 0 10px}
+.user button{width:100%}
+main{padding:32px 24px 48px;max-width:1180px;width:100%}
+.step{font-size:11px;font-weight:600;letter-spacing:.04em}
+h1{font:500 40px/1.1 "Cormorant Garamond",Georgia,serif;margin:2px 0 20px}
+.alert{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--alert-bg);border:1px solid var(--alert-line);border-radius:4px;padding:12px 18px;margin-bottom:22px}
+.alert small{display:block;color:var(--muted)}
+.alert .count{color:var(--alert-text);font-size:12px;align-self:center}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px;align-items:start}
+.head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:10px}
+.head small{color:var(--muted);font-size:11px;letter-spacing:.03em;display:block}
+.head h2{margin:0;font-size:18px;font-weight:500}
+input[type=search],input[type=text]{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:9px 12px;width:100%}
+.head input{width:190px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:4px}
+.row{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.dot{width:30px;height:30px;border-radius:50%;background:var(--sand);display:grid;place-items:center;font-size:12px;flex:none}
+.dot.ok{background:var(--green-soft);color:var(--green)}
+.row .t{flex:1;min-width:0}
+.row .t b{font-weight:500;display:block}
+.row .t span{color:var(--muted);font-size:12px}
+button{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:7px 14px;cursor:pointer}
+button:hover{background:var(--sand)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.primary{background:var(--green);border-color:var(--green);color:#fff;font-weight:500}
+.primary:hover{background:#26422f}
+.saved{display:flex;justify-content:flex-end;margin-top:14px}
+.tip{background:var(--green);color:var(--on-green);border-radius:4px;padding:22px 24px}
+.tip small{font-size:11px;letter-spacing:.04em;opacity:.8}
+.tip h3{font:500 25px/1.2 "Cormorant Garamond",Georgia,serif;margin:4px 0 10px}
+.tip p{margin:0 0 10px;opacity:.92}
+.tip p:last-child{margin:0}
+.progress{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:22px 24px;margin-top:14px}
+.progress .top{display:flex;justify-content:space-between;align-items:baseline}
+.bar{height:4px;background:var(--line);border-radius:2px;margin:14px 0 12px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);transition:width .3s}
+.progress p{margin:0;color:var(--muted);font-size:12px}
+footer{border-top:1px solid var(--line);margin-top:40px;padding-top:16px;color:var(--muted);font-size:12px}
+.empty{padding:18px;color:var(--muted)}
+/* modal */
+.overlay{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:4px;width:100%;max-width:860px;max-height:100%;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) 320px}
+.m-form{padding:28px 28px 26px}
+.m-form h2{font:500 28px/1.1 "Cormorant Garamond",Georgia,serif;margin:0 0 20px}
+.m-form label{font-weight:500;font-size:13px;display:block;margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.chips button{font-size:13px;padding:6px 10px}
+.hint{color:var(--muted);font-size:12px;margin:14px 0 0}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:26px}
+.m-tips{background:var(--green);color:var(--on-green);padding:28px 24px}
+.m-tips small{font-size:11px;letter-spacing:.04em;opacity:.8}
+.m-tips h3{font:500 23px/1.2 "Cormorant Garamond",Georgia,serif;margin:2px 0 12px}
+.m-tips ul{margin:0 0 16px;padding-left:18px}
+.m-tips li{margin-bottom:8px;opacity:.92}
+.secret{border-top:1px solid rgba(246,239,227,.3);padding-top:14px}
+.secret b{display:block;font-weight:600;margin-bottom:2px}
+@media (max-width:960px){.grid{grid-template-columns:1fr}.tipcol{order:-1}}
+@media (max-width:760px){.app{grid-template-columns:1fr}aside{flex-direction:row;align-items:center;gap:12px;padding:10px 14px;overflow-x:auto}.logo{border:0;margin:0;padding:0;font-size:22px}nav{display:flex;gap:4px}nav a{margin:0;white-space:nowrap}.user{display:none}main{padding:20px 16px 40px}h1{font-size:32px}.head{flex-direction:column;align-items:stretch}.head input{width:100%}.modal{grid-template-columns:1fr}.m-tips{order:-1;padding:20px 22px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo">ANIMA<br>CANTUS</div>
+    <nav><a href="#">Minha jornada</a><a href="#">Contrato</a><a href="#" class="on">Repertório</a></nav>
+    <div class="user">Conectados como<b>teste@teste.org</b><button type="button">Sair da conta</button></div>
+  </aside>
+  <main>
+    <div class="step">ETAPA 3 DE 5</div>
+    <h1>Nosso repertório</h1>
+    <div class="alert">
+      <div><b style="font-weight:500">Complete até 03/12/2026</b><small>Janela recomendada: 28/11/2026 a 03/12/2026</small></div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="grid">
+      <section>
+        <div class="head">
+          <div><small>CERIMÔNIA</small><h2>Momentos musicais</h2></div>
+          <input type="search" id="q" placeholder="Buscar música" aria-label="Buscar música">
+        </div>
+        <div class="list" id="list"></div>
+        <div class="saved"><button type="button" id="saved">Progresso salvo</button></div>
+      </section>
+      <div class="tipcol">
+        <div class="tip">
+          <small>DICA GERAL</small>
+          <h3>A música precisa ter a cara do casal</h3>
+          <p>Não existe música certa ou errada para uma cerimônia. Clássica, MPB, pop, rock, sertanejo, gospel ou trilha de filme: qualquer estilo funciona quando tem significado para os noivos.</p>
+          <p>Vale observar as regras do local, conferir se a letra combina com o momento e planejar com os músicos a duração e as transições. As canções não precisam ser do mesmo estilo, mas podem formar uma sequência com começo, emoção e celebração.</p>
+        </div>
+        <div class="progress">
+          <div class="top"><span>Progresso</span><span class="serif" style="font-size:20px" id="pct"></span></div>
+          <div class="bar"><i id="bar"></i></div>
+          <p>Suas escolhas são salvas e podem ser retomadas a qualquer momento.</p>
+        </div>
+      </div>
+    </div>
+    <footer>A música acompanha cada etapa da história de vocês.</footer>
+  </main>
+</div>
+
+<div class="overlay" id="ov" role="dialog" aria-modal="true" aria-labelledby="mt">
+  <div class="modal">
+    <div class="m-form">
+      <h2 id="mt">Escolher música</h2>
+      <label for="song" id="mlabel"></label>
+      <input type="text" id="song" placeholder="Nome da música" autocomplete="off">
+      <div class="chips" id="chips"></div>
+      <p class="hint">Combine com os músicos a duração e o arranjo de cada momento.</p>
+      <div class="actions"><button type="button" id="cancel">Cancelar</button><button type="button" class="primary" id="save">Salvar escolha</button></div>
+    </div>
+    <aside class="m-tips" style="display:block;border:0">
+      <small>DICAS PARA ESTE MOMENTO</small>
+      <h3 id="tt"></h3>
+      <ul id="tl"></ul>
+      <div class="secret"><b>O segredo</b><span id="ts"></span></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+var moments=[
+ {id:"padrinhos",name:"Entrada dos padrinhos",song:"A Thousand Years",sug:["Canon in D — Pachelbel","Here Comes the Sun — The Beatles"],
+  tips:["Músicas acolhedoras e alegres criam uma atmosfera de amizade e celebração.","Uma versão instrumental de uma canção conhecida é uma ótima alternativa.","Considere o número de casais e o tempo necessário para a entrada completa."],
+  secret:"A trilha deve acolher os padrinhos e preparar o clima da cerimônia."},
+ {id:"noivo",name:"Entrada do noivo",song:"",sug:["Ave Maria — Schubert","Viva la Vida — Coldplay"],
+  tips:["Escolha uma música que represente a personalidade dele: emocionante, alegre, marcante ou descontraída.","Pode ser uma canção importante na vida dele ou na relação com quem o acompanhará.","Uma versão instrumental de uma música favorita também funciona muito bem."],
+  secret:"Ele deve se reconhecer na música e se sentir à vontade para viver a própria entrada."},
+ {id:"noiva",name:"Entrada da noiva",song:"",sug:["Marcha Nupcial — Mendelssohn","Perfect — Ed Sheeran"],
+  tips:["A Marcha Nupcial é uma opção, não uma obrigação: a música pode ser tradicional ou surpreendente.","Escolha uma canção que desperte emoção e represente a noiva ou a história do casal.","Combine com os músicos o início da caminhada, a abertura das portas e o tempo do percurso."],
+  secret:"Ao imaginar a entrada, a noiva deve sentir que aquela música traduz o momento."},
+ {id:"aliancas",name:"Alianças",song:"",sug:["All of Me — John Legend","Amor Pra Recomeçar — Frejat"],
+  tips:["Canções sobre amor, compromisso e união reforçam o simbolismo da troca das alianças.","A música também pode homenagear quem levará as alianças até o altar.","Prefira uma duração adequada e um arranjo que não se sobreponha à cerimônia."],
+  secret:"Dê espaço para a delicadeza e para o significado do compromisso."},
+ {id:"assinaturas",name:"Assinaturas",song:"",sug:["Clair de Lune — Debussy","Gymnopédie nº 1 — Satie"],
+  tips:["Uma música suave ou instrumental acompanha o momento sem roubar a atenção.","Aproveite para incluir uma canção querida que não apareceu em outras entradas.","Como a duração pode variar, combine um arranjo que possa ser estendido ou finalizado naturalmente."],
+  secret:"Mantenha uma atmosfera agradável durante esse momento mais protocolar."},
+ {id:"saida",name:"Saída dos noivos",song:"",sug:["Signed, Sealed, Delivered — Stevie Wonder","Happy — Pharrell Williams"],
+  tips:["É o momento de celebrar: músicas vibrantes e refrões marcantes funcionam muito bem.","Escolha algo que faça o casal sorrir e tenha a energia que deseja levar para a festa.","Combine com os músicos a entrada do refrão ou o crescimento da música no início da saída."],
+  secret:"A saída deve soar como a celebração da história que acaba de ganhar um novo capítulo."}
+];
+var $=function(i){return document.getElementById(i)},cur=null,lastBtn=null;
+function render(){
+  var q=$("q").value.trim().toLowerCase(),h="",n=0;
+  moments.forEach(function(m,i){
+    if(m.song)n++;
+    if(q&&(m.name+" "+m.song).toLowerCase().indexOf(q)<0)return;
+    h+='<div class="row"><div class="dot'+(m.song?' ok':'')+'">'+(m.song?'♫':i+1)+'</div><div class="t"><b>'+m.name+'</b><span>'+(m.song?esc(m.song):'Nenhuma música escolhida')+'</span></div><button type="button" data-i="'+i+'" aria-label="'+(m.song?'Alterar música de ':'Escolher música para ')+m.name+'">'+(m.song?'›':'+ Escolher')+'</button></div>';
+  });
+  $("list").innerHTML=h||'<div class="empty">Nenhum momento encontrado para essa busca.</div>';
+  var p=Math.round(n/moments.length*100);
+  $("count").textContent=n+" de "+moments.length+" escolhidas";
+  $("pct").textContent=p+"%";$("bar").style.width=p+"%";
+}
+function esc(s){return s.replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function openM(i){
+  var m=moments[i];cur=i;
+  $("mlabel").textContent=m.name;$("song").value=m.song;
+  $("tt").textContent=m.name;$("ts").textContent=m.secret;
+  $("tl").innerHTML=m.tips.map(function(t){return"<li>"+t+"</li>"}).join("");
+  $("chips").innerHTML=m.sug.map(function(s){return'<button type="button">'+s+'</button>'}).join("");
+  $("ov").classList.add("open");$("song").focus();
+}
+function closeM(){$("ov").classList.remove("open");cur=null}
+$("list").addEventListener("click",function(e){var b=e.target.closest("button[data-i]");if(b){lastBtn=b.dataset.i;openM(+b.dataset.i)}});
+$("chips").addEventListener("click",function(e){var b=e.target.closest("button");if(b)$("song").value=b.textContent});
+$("cancel").onclick=closeM;
+$("ov").addEventListener("click",function(e){if(e.target===$("ov"))closeM()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&cur!==null)closeM()});
+$("song").addEventListener("keydown",function(e){if(e.key==="Enter")$("save").click()});
+$("save").onclick=function(){moments[cur].song=$("song").value.trim();closeM();render();var b=$("saved");b.textContent="Progresso salvo ✓";setTimeout(function(){b.textContent="Progresso salvo"},1800)};
+$("q").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>

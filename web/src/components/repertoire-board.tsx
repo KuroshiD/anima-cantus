@@ -11,6 +11,65 @@ function normalize(value: string): string {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+const momentGuidance: Record<string, { tips: string[]; secret: string }> = {
+  "Entrada dos padrinhos": {
+    tips: [
+      "Músicas acolhedoras e alegres criam uma atmosfera de amizade e celebração.",
+      "Uma versão instrumental de uma canção conhecida é uma ótima alternativa.",
+      "Considere o número de casais e o tempo necessário para a entrada completa.",
+    ],
+    secret: "A trilha deve acolher os padrinhos e preparar o clima da cerimônia.",
+  },
+  "Entrada do noivo": {
+    tips: [
+      "Escolha uma música que represente a personalidade dele: emocionante, alegre, marcante ou descontraída.",
+      "Pode ser uma canção importante na vida dele ou na relação com quem o acompanhará.",
+      "Uma versão instrumental de uma música favorita também funciona muito bem.",
+    ],
+    secret: "Ele deve se reconhecer na música e se sentir à vontade para viver a própria entrada.",
+  },
+  "Entrada da noiva": {
+    tips: [
+      "A Marcha Nupcial é uma opção, não uma obrigação: a música pode ser tradicional ou surpreendente.",
+      "Escolha uma canção que desperte emoção e represente a noiva ou a história do casal.",
+      "Combine com os músicos o início da caminhada, a abertura das portas e o tempo do percurso.",
+    ],
+    secret: "Ao imaginar a entrada, a noiva deve sentir que aquela música traduz o momento.",
+  },
+  Alianças: {
+    tips: [
+      "Canções sobre amor, compromisso e união reforçam o simbolismo da troca das alianças.",
+      "A música também pode homenagear quem levará as alianças até o altar.",
+      "Prefira uma duração adequada e um arranjo que não se sobreponha à cerimônia.",
+    ],
+    secret: "Dê espaço para a delicadeza e para o significado do compromisso.",
+  },
+  Assinaturas: {
+    tips: [
+      "Uma música suave ou instrumental acompanha o momento sem roubar a atenção.",
+      "Aproveite para incluir uma canção querida que não apareceu em outras entradas.",
+      "Como a duração pode variar, combine um arranjo que possa ser estendido ou finalizado naturalmente.",
+    ],
+    secret: "Mantenha uma atmosfera agradável durante esse momento mais protocolar.",
+  },
+  "Saída dos noivos": {
+    tips: [
+      "É o momento de celebrar: músicas vibrantes e refrões marcantes funcionam muito bem.",
+      "Escolha algo que faça o casal sorrir e tenha a energia que deseja levar para a festa.",
+      "Combine com os músicos a entrada do refrão ou o crescimento da música no início da saída.",
+    ],
+    secret: "A saída deve soar como a celebração da história que acaba de ganhar um novo capítulo.",
+  },
+};
+
+const defaultGuidance = {
+  tips: [
+    "Escolha uma canção que tenha significado para vocês e combine com o clima deste momento.",
+    "Conversem com os músicos sobre a duração, o arranjo e as transições.",
+  ],
+  secret: "A música deve refletir a história e o jeito de vocês.",
+};
+
 export function RepertoireBoard({ initial }: { initial: RepertoireView }) {
   const router = useRouter();
   const [moments, setMoments] = useState(initial.moments);
@@ -28,6 +87,7 @@ export function RepertoireBoard({ initial }: { initial: RepertoireView }) {
     [moments, query],
   );
   const current = moments.find((moment) => moment.id === editing);
+  const guidance = current ? momentGuidance[current.name] ?? defaultGuidance : defaultGuidance;
 
   useEffect(() => {
     const picker = pickerRef.current;
@@ -124,22 +184,17 @@ export function RepertoireBoard({ initial }: { initial: RepertoireView }) {
         </section>
         <div className="aside">
           <aside className="card card--green inspiration">
-            <Icon id="i-sparkles" />
-            <p className="eyebrow">Inspiração</p>
-            <h2 className="heading-serif inspiration__title">Dicas de músicas para cada momento</h2>
-            <button
-              className="btn btn--sand"
-              type="button"
-              onClick={() => {
-                const moment = moments.find((item) => !item.song) ?? moments[0];
-                if (moment) {
-                  setEditing(moment.id);
-                  setDraft(moment.song);
-                }
-              }}
-            >
-              Ver sugestões <Icon id="i-arrow-right" />
-            </button>
+            <p className="eyebrow">Dica geral</p>
+            <h2 className="heading-serif inspiration__title">A música precisa ter a cara do casal</h2>
+            <p>
+              Não existe música certa ou errada para uma cerimônia. Clássica, MPB, pop, rock, sertanejo,
+              gospel ou trilha de filme: qualquer estilo funciona quando tem significado para os noivos.
+            </p>
+            <p>
+              Vale observar as regras do local, conferir se a letra combina com o momento e planejar com os
+              músicos a duração e as transições. As canções não precisam ser do mesmo estilo, mas podem
+              formar uma sequência com começo, emoção e celebração.
+            </p>
           </aside>
           <section className="card" aria-labelledby="overall-title">
             <div className="overall__head">
@@ -154,7 +209,15 @@ export function RepertoireBoard({ initial }: { initial: RepertoireView }) {
         </div>
       </div>
       <footer className="page-footer"><Icon id="i-heart" />A música acompanha cada etapa da história de vocês.</footer>
-      <dialog className="picker" ref={pickerRef} aria-labelledby="picker-title" onCancel={() => setEditing(null)}>
+      <dialog
+        className="picker"
+        ref={pickerRef}
+        aria-labelledby="picker-title"
+        onCancel={() => setEditing(null)}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setEditing(null);
+        }}
+      >
         {current && !isCompleted ? (
           <form onSubmit={(event) => {
             event.preventDefault();
@@ -165,24 +228,36 @@ export function RepertoireBoard({ initial }: { initial: RepertoireView }) {
             setEditing(null);
             void persist(next);
           }}>
-            <h2 className="heading-serif picker__title" id="picker-title">Escolher música</h2>
-            <label className="picker__label" htmlFor="picker-input">{current.name}</label>
-            <input id="picker-input" value={draft} placeholder="Nome da música" required onChange={(event) => setDraft(event.target.value)} />
-            {current.tips.length ? (
-              <ul>
-                {current.tips.map((tip) => (
-                  <li key={tip.id}>
-                    <button className="btn btn--secondary btn--sm" type="button" onClick={() => setDraft(tip.title)}>
+            <div className="picker__form">
+              <h2 className="heading-serif picker__title" id="picker-title">Escolher música</h2>
+              <label className="picker__label" htmlFor="picker-input">{current.name}</label>
+              <input id="picker-input" value={draft} placeholder="Nome da música" required onChange={(event) => setDraft(event.target.value)} />
+              {current.tips.length ? (
+                <div className="picker__suggestions" aria-label="Sugestões de músicas">
+                  {current.tips.map((tip) => (
+                    <button className="btn btn--secondary btn--sm" key={tip.id} type="button" onClick={() => setDraft(tip.title)}>
                       {tip.title}{tip.artist ? ` — ${tip.artist}` : ""}
                     </button>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            <div className="picker__actions">
-              <button className="btn btn--secondary" type="button" onClick={() => setEditing(null)}>Cancelar</button>
-              <button className="btn btn--primary" type="submit">Salvar escolha</button>
+                  ))}
+                </div>
+              ) : null}
+              <p className="picker__hint">Combine com os músicos a duração e o arranjo de cada momento.</p>
+              <div className="picker__actions">
+                <button className="btn btn--secondary" type="button" onClick={() => setEditing(null)}>Cancelar</button>
+                <button className="btn btn--primary" type="submit">Salvar escolha</button>
+              </div>
             </div>
+            <aside className="picker__guidance">
+              <p className="eyebrow">Dicas para este momento</p>
+              <h3 className="heading-serif picker__guidance-title">{current.name}</h3>
+              <ul className="picker__tips">
+                {guidance.tips.map((tip) => <li key={tip}>{tip}</li>)}
+              </ul>
+              <div className="picker__secret">
+                <strong>O segredo</strong>
+                <p>{guidance.secret}</p>
+              </div>
+            </aside>
           </form>
         ) : null}
       </dialog>

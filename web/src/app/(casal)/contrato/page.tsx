@@ -9,7 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ContractPage() {
-  const result = await serverApi<ContractView>("/contratos/me");
+  const [result, dateConfig] = await Promise.all([
+    serverApi<ContractView>("/contratos/me"),
+    serverApi<{ maxWeddingAdvanceDays: number }>("/configuracao/datas"),
+  ]);
   if (!result.data) {
     return (
       <section className="card">
@@ -21,7 +24,7 @@ export default async function ContractPage() {
   return (
     <>
       <PageHeading eyebrow="Etapa 2 de 5" title="Contrato" />
-      <ContractWizard initial={result.data} />
+      <ContractWizard initial={result.data} maxWeddingAdvanceDays={dateConfig.data?.maxWeddingAdvanceDays ?? 120} />
     </>
   );
 }
